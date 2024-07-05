@@ -1,5 +1,5 @@
 
-let letter = this.document.getElementById("letter");
+let letter = document.getElementById("letter");
 
 
 function changeLetter() {
