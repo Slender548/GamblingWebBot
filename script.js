@@ -5,5 +5,5 @@ let button = this.document.getElementById("button");
 
 function changeLetter() {
     let randomLetter = "Let's say wtf";
-    letter.innerText = randomLetter;
+    letter.textContent = randomLetter;
 }
