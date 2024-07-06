@@ -5,16 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GamblingWebBot</title>
     <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.146.0/three.min.js"></script>
+    <script src="threedmodel.js"></script>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="main">
         <h1 id="letter">Главное меню</h1>
+        <div id="ref-panel">
+            <p>Панель реферала</p>
+            <button id="ref-invited">Приглашенo: 2</button>
+            <button id="ref-reward">Награда: 245 монет</button>
+            <button id="ref-link">Ссылка (клик)</button>
+        </div>
     </div>
     <div id="nav">
-        <button id="main-wallet"><a href="wallet.html">Кошелёк</a></button>
-        <button id="main-games"><a href="games.html">Игры</a></button>
-        <button id="main-lottery"><a href="lottery.html">Розыгрыш</a></button>
+        <a href="wallet.html"><button id="btn-main">Кошелёк</button></a>
+        <a href="games.html"><button id="btn-main">Игры</button></a>
+        <a href="lottery.html"><button id="btn-main">Розыгрыш</button></a>
     </div>
 </body>
 </html>
