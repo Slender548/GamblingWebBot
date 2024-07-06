@@ -30,4 +30,6 @@ const create3DEnvironment = () => {
   
      requestAnimationFrame(animate);
  };
- create3DEnvironment();
+document.addEventListener('DOMContentLoaded', () => {
+    create3DEnvironment();
+});
