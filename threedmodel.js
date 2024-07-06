@@ -1,50 +1,70 @@
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, sizes.width, sizes.height, 0.1, 1000);
-scene.add(camera);
-const canvas = document.querySelector("canvas.webgl");
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    antialias: true,
-    alpha: true,
-});
-renderer.setSize(sizes.width, sizes.height);
-const bodyElement = document.querySelector("body");
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-const sphereShadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.5, 1.5),
-    new THREE.MeshBasicMaterial({
-        transparent: true,
-        color: 0xFEE60B,
-        opacity: 1,
-        alphaMap: alphaShadow
-    })
-)
-sphereShadow.rotation.x = -Math.PI * -0.1
-sphereShadow.position.y = -0.5
-sphereShadow.position.x = 1.5;
-scene.add(sphereShadow)
-cube.rotation.x = 0
-    cube.rotation.y = -0.4
-    cube.rotation.z = 0
-    const clock = new THREE.Clock()
-    let lastElapsedTime = 0
-    
-    const tick = () => {
-        const elapsedTime = clock.getElapsedTime()
-        lastElapsedTime = elapsedTime
-    
-        // Render
-        renderer.render(scene, camera)
-    
-        // Call tick again on the next frame
-        window.requestAnimationFrame(tick)
-    }
-    
-    tick()
-    var transformCube = [];
-    transformCube = [{
-            positionX: Math.PI * 0,
-            positionY: Math.PI * -0.12,
-            positionZ: Math.PI * 0,
-        }
-    ]
+        // Physics setup
+        const world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+
+        // Ground
+        const groundBody = new CANNON.Body({ mass: 0 });
+        groundBody.addShape(new CANNON.Plane());
+        groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+        world.addBody(groundBody);
+
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x555555, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Load 3D model
+        const loader = new THREE.GLTFLoader();
+        loader.load('Pathfinder_2k.glb', (gltf) => {
+            const model = gltf.scene;
+            scene.add(model);
+
+            // Create physics body for model
+            const shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1)); // Adjust size as needed
+            const body = new CANNON.Body({ mass: 1 });
+            body.addShape(shape);
+            body.position.set(0, 5, 0); // Start above the ground
+            world.addBody(body);
+
+            // Animate and synchronize physics with Three.js
+            const animate = () => {
+                requestAnimationFrame(animate);
+                world.step(1 / 60);
+
+                // Sync Three.js model with Cannon.js body
+                model.position.copy(body.position);
+                model.quaternion.copy(body.quaternion);
+
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            // Handle mouse/touch events
+            renderer.domElement.addEventListener('click', (event) => {
+                coordinates
+                const mouse = new THREE.Vector2();
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                // Raycasting to detect click on model
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(model, true);
+
+                if (intersects.length > 0) {
+                    // Apply force or impulse to the physics body
+                    const force = new CANNON.Vec3(0, 500, 0); // Example force vector
+                    body.applyImpulse(force, body.position);
+                }
+            });
+        });
+
+        camera.position.z = 10;
