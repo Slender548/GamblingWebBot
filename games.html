@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <p class="games-title">Игры</p>
+    <div class="games-list">
+        <div class="games-row">
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="dice.png" width="20%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="dice_enter()" class="btn-game-enter">
+                        Dice
+                    </button>
+                </div>
+            </div>
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="blackjack.png" width="20%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="blackjack_enter()" class="btn-game-enter">
+                        Blackjack
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="games-row">
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="mines.png" width="20%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="mines_enter()" class="btn-game-enter">
+                        Mines
+                    </button>
+                </div>
+            </div>
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="crash.png" width="20%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="crash_enter()" class="btn-game-enter">
+                        Crash
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="games-row">
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="guesser.png" width="20%" height="50%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="guesser_enter()" class="btn-game-enter">
+                        Guesser
+                    </button>
+                </div>
+            </div>
+            <div class="games-cell">
+                <div class="games-cell-img">
+                    <img src="roulette.png" width="20%"/>
+                </div>
+                <div class="games-cell-btn">
+                    <button type="button" onclick="roulette_enter()" class="btn-game-enter">
+                        Roulette
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="games-exit">
+        <button type="button" onclick="games_exit()">
+            Выйти из игры
+        </button>
+    </div>
+</body>
+</html>

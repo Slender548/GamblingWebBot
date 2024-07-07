@@ -1,9 +1,15 @@
+:root {
+    --btn-active: #4CAF50;
+    --btn-color: #45a049;
+}
+
 #nav {
     display: flex;
     flex-direction: row;
     height: 15%;
     align-items: baseline;
     justify-content: center;
+    z-index: 1;
 }
 #ref-panel {
     display: flex;
@@ -24,7 +30,7 @@
 #ref-panel button {
     padding: 5px 0px;
     border: none;
-    background-color: #4CAF50;
+    background-color: var(--btn-color);
     color: white;
     text-decoration: none;
     cursor: pointer;
@@ -35,6 +41,7 @@
 #main {
     text-align: center;
     height: 85%;
+    z-index: 1;
 }
 #label-money {
     font-size: 24px;
@@ -44,7 +51,7 @@
     display: inline-block;
     padding: 10px 20px;
     border: none;
-    background-color: #4CAF50;
+    background-color: var(--btn-color);
     color: white;
     text-decoration: none;
     margin: 4px 2px;
@@ -52,15 +59,15 @@
     border-radius: 5px;
 }
 #btn-wallet:hover {
-    background-color: #45a049;
+    background-color: var(--btn-active);
 }
 #btn-wallet:active {
-    background-color: #45a049;
+    background-color: var(--btn-active);
     box-shadow: 0 5px #999;
     transform: translateY(2px);
 }
 #btn-main {
-    background-color: #4CAF50;
+    background-color: var(--btn-color);
     color: white;
     padding: 8px 5px;
     border: none;
@@ -73,10 +80,10 @@
     border-radius: 5px;
 }
 #btn-main:hover {
-    background-color: #45a049;
+    background-color: var(--btn-active);
 }
 #btn-main:active {
-    background-color: #45a049;
+    background-color: var(--btn-active);
     box-shadow: 0 5px #999;
     transform: translateY(2px);
 }
@@ -95,4 +102,68 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+
+.games-list {
+    display: flex;
+    flex-direction: column;
+}
+.games-row {
+    display: flex;
+    flex-direction: row;
+}
+.games-cell {
+    flex: 1;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+    transition: box-shadow 0.3s;
+    background-color: #f1f1f1;
+}
+.games-cell-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50%;
+}
+.games-cell-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50%;
+}
+.btn-game-enter {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--btn-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.btn-game-enter:hover {
+    background-color: var(--btn-active);
+}
+.btn-game-enter:active {
+    background-color: var(--btn-active);
+    transform: translateY(2px);
+    box-shadow: 0 5px #999;
+}
+
+.games-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+html, body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: white;
 }
