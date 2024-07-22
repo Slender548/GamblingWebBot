@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Referal{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}="page-title">
+<div class="page-title">
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Приглашено:</b> {{ ref }} пользовател{{ ref_ending}}
+    </div>
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Награда:</b> {{ reward }} монет{{ reward_ending }}
+    </div>
+</div>
+<div class="page-other">
+    <button class="cell btn-active">
+        Скопировать ссылку
+    </button>
+    <button class="cell btn-money">
+        💰Забрать награду💰
+    </button>
+</div>
+{% endblock %}
+{% block footer %}
+<script>
+    let ref = document.getElementById("Ref");
+    ref.style.color = "black";
+</script>
+{% endblock %}

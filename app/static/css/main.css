@@ -1,0 +1,364 @@
+:root {
+    --btn-active: #4CAF50;
+    --btn-color: #45a049;
+}
+
+body {
+    background-color: rgb(255, 255, 255);
+}
+.nav {
+    position:fixed;
+    bottom: 0;
+    left: 0;
+    width: 99.75vw;
+    border: black solid 1px;
+    border-radius: 1em 1em 0 0;
+    display: flex;
+    justify-content: space-evenly;
+    background-color: rgb(36, 32, 32);
+    height: 10%;
+    align-items: center;
+}
+.btn-nav {
+    border-radius: 1em;
+    border: white solid 1px;
+    width: 16%;
+    height: 75%;
+    background-image: linear-gradient(90deg, rgb(255, 0, 208) 0%, rgb(51, 0, 255) 100%);
+    color: white;
+    transition: all 0.2s;
+}
+.btn-nav:hover {
+    font-size: 15px;
+    color: rgb(36, 32, 32);
+}
+
+.page-title {
+    position: absolute;
+    background-color: black;
+    top: 0;
+    left: 0;
+    width: 99.7%;
+    height: 10vh;
+    border-radius: 0 0 1rem 1rem;
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.page-title-cell {
+    color: white;
+}
+.page-other {
+    background-color: rgb(255, 255, 255);
+    width: 99.7%;
+    margin-top: 11vh;
+    height: 72vh;
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+.cell {
+    display: flex;
+    width: 90%;
+    justify-content:center;
+    border: 1px solid #b0b0b0;
+    margin: 0.3em 0;
+    border-radius: 0.8em;
+    background-color: white;
+    height: 2.5em;
+    align-items: center;
+    font-size: 20px;
+}
+.btn-money {
+    background-image: linear-gradient(90deg, #ffff00, #bb6700);
+    color: white;
+    transition: transform 0.3s ease;
+}
+.btn-money:hover {
+    transform: scale(1.05);
+}
+.btn-money:active {
+    transform: scale(1.1);
+}
+.btn-active {
+    color: black;
+    transition: transform 0.3s ease;
+}
+.btn-active:hover {
+    transform: scale(1.05);
+}
+.btn-active:active {
+    transform: scale(1.1);
+}
+.page-other-games-cell {
+    display: flex;
+    flex-direction: row;
+}
+.page-other-games-game-cell {
+    border: 1px solid #b0b0b0;
+    border-radius: 10%;
+    width: 40%;
+    margin: 5% 5%;
+    padding: 1%;
+    display: flex;
+    flex-direction: column;
+}
+.img-game-enter {
+    width: 38vw;
+    height: 10vh;
+    justify-content: center;
+    align-self: center;
+    padding: 10px;
+}
+.btn-game-enter {
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, #e50000, #ffb700);
+    color: white;
+    border: none;
+    border-radius: 15%;
+    align-self: center;
+    justify-content: center;
+    font-size: 16px;
+    padding: 10px;
+    transition: all 0.5s;
+}
+.btn-game-enter:hover {
+    font-size: 20px;
+    padding: 0;
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+}
+
+.btn-game-enter:active {
+    color: grey;
+    font-size: 25px;
+}
+/* Common Popup Styles */
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 300px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-content h2 {
+    margin-top: 0;
+}
+
+.popup-content label {
+    margin-bottom: 5px;
+}
+
+.popup-content input {
+    margin-bottom: 15px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Button Styles */
+.btn-create, .btn-cancel {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.btn-create {
+    background-image: linear-gradient(90deg, #4CAF50, #2E7D32);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-create:hover {
+    background-image: linear-gradient(90deg, #45a049, #1B5E20);
+    transform: scale(1.05);
+    color: black;
+}
+
+.btn-create:active {
+    background-image: linear-gradient(90deg, #45a049, #1B5E20);
+    color: white;
+    transform: scale(0.95);
+}
+
+.btn-cancel {
+    background-image: linear-gradient(90deg, #f44336, #c62828);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    transform: scale(1.05);
+    color: black;
+}
+
+.btn-cancel:active {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    color: white;
+    transform: scale(0.95);
+}
+.dice-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    margin-top: 11vh;
+}
+.dice-join {
+    background-color: #6200ea;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 80%;
+    text-align: center;
+}
+.dice-join .dice-join-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.dice-join .dice-join-reward {
+    font-size: 14px;
+    color: #d1c4e9;
+}
+.dice-join:hover {
+    background-color: #3700b3;
+    transform: scale(1.05);
+}
+.dice-join:active {
+    background-color: #03dac6;
+    transform: scale(0.95);
+}
+.dice-create {
+    position: absolute;
+    right: 2%;
+    top: 2%;
+}
+.dice-start-bot {
+    position: absolute;
+    left: 2%;
+    top: 2%;
+}
+.btn-dice-create {
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, #ffff00, #bb6700);
+    color: white;
+    border: none;
+    border-radius: 10%;
+    align-self: center;
+    justify-content: center;
+    font-size: 20px;
+    padding: 10px;
+    transition: all 0.2s;
+    border: 1px solid white;
+}
+.btn-dice-create:hover {
+    font-size: 25px;
+    transform: scale(1.05);
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+}
+.btn-dice-create:active {
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+    color: white;
+    font-size: 25px;
+    transform: scale(0.95);
+}
+/* * { box-sizing: border-box; } */
+
+.scene {
+  width: 50vw;
+  height: 50vh;
+  margin: 20px;
+  perspective: 40vh;
+}
+
+.cube1 {
+  width:200px;
+  height: 200px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: translateZ(-100px);
+  transition: transform 0.1s;
+}
+
+.cube2 {
+    width:200px;
+    height: 200px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: translateZ(-100px);
+    transition: transform 0.1s;
+}
+
+.cube.show-1  { transform: translateZ(-100px) rotateY(   0deg); }
+.cube.show-2  { transform: translateZ(-100px) rotateY(-180deg); }
+.cube.show-3  { transform: translateZ(-100px) rotateY( -90deg); }
+.cube.show-4   { transform: translateZ(-100px) rotateY(  90deg); }
+.cube.show-5   { transform: translateZ(-100px) rotateX( -90deg); }
+.cube.show-6 { transform: translateZ(-100px) rotateX(  90deg); }
+
+.cube__face {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 4px solid white;
+  line-height: 200px;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+.cube__face--1  { background: black;  opacity: 0.75;}
+.cube__face--3  { background: black;   opacity: 0.75; }
+.cube__face--2  {  background: black;   opacity: 0.75; }
+.cube__face--4  {  background: black;   opacity: 0.75; }
+.cube__face--5   {  background: black;   opacity: 0.75; }
+.cube__face--6 {  background: black;  opacity: 0.75; }
+
+.cube__face--1  { transform: rotateY(  0deg) translateZ(100px); }
+.cube__face--2   { transform: rotateY(180deg) translateZ(100px); }
+.cube__face--3  { transform: rotateY( 90deg) translateZ(100px); }
+.cube__face--4   { transform: rotateY(-90deg) translateZ(100px); }
+.cube__face--5   { transform: rotateX( 90deg) translateZ(100px); }
+.cube__face--6 { transform: rotateX(-90deg) translateZ(100px); }

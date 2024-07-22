@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Games{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}
+<div class="page-title">
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Меню игр</b>
+    </div>
+</div>
+<div class="page-other">
+    <div class="page-other-games-cell">
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/dice.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="diceEnter()" class="btn-game-enter">
+                Dice
+            </button>
+        </div>
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/blackjack.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="blackjackEnter()" class="btn-game-enter">
+                Blackjack
+            </button>
+        </div>
+    </div>
+    <div class="page-other-games-cell">
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/mines.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="minesEnter()" class="btn-game-enter">
+                Mines
+            </button>
+        </div>
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/crash.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="crashEnter()" class="btn-game-enter">
+                Crash
+            </button>
+        </div>
+    </div>
+    <div class="page-other-games-cell">
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/guess.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="guessEnter()" class="btn-game-enter">
+                Guess
+            </button>
+        </div>
+        <div class="page-other-games-game-cell">
+            <img src="{{ url_for('static', filename='img/roulette.png') }}" class="img-game-enter"/>
+            <button type="button" onclick="rouletteEnter()" class="btn-game-enter">
+                Roulette
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script>
+    let games = document.getElementById("Games");
+    games.style.color = "black";
+</script>
+{% endblock %}

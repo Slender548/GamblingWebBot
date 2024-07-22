@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title</title>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="nav.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <style>
+        body {
+            background-color: rgb(255, 255, 255);
+        }
+        .nav {
+            position:fixed;
+            bottom: 0;
+            left: 0;
+            width: 99.75vw;
+            border: black solid 1px;
+            border-radius: 1em 1em 0 0;
+            display: flex;
+            justify-content: space-evenly;
+            background-color: rgb(36, 32, 32);
+            height: 10%;
+            align-items: center;
+        }
+        .btn-nav {
+            border-radius: 1em;
+            border: white solid 1px;
+            width: 16%;
+            height: 75%;
+            background-image: linear-gradient(90deg, rgb(255, 0, 208) 0%, rgb(51, 0, 255) 100%);
+            color: white;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover {
+            font-size: 15px;
+            color: rgb(36, 32, 32);
+        }
+    </style>
+    <style>
+        .page-title {
+            position: absolute;
+            background-color: black;
+            top: 0;
+            left: 0;
+            width: 99.7%;
+            height: 10vh;
+            border-radius: 0 0 1rem 1rem;
+            border: 1px solid black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .page-title-cell {
+            color: white;
+        }
+        .page-other {
+            position: absolute;
+            background-color: rgb(255, 255, 255);
+            width: 99.7%;
+            left: 0;
+            top: 10.5vh;
+            height: 72vh;
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+        .cell {
+            display: flex;
+            width: 90%;
+            justify-content:center;
+            border: 1px solid #b0b0b0;
+            margin: 0.3em 0;
+            border-radius: 0.8em;
+            background-color: white;
+            height: 2.5em;
+            align-items: center;
+            font-size: 20px;
+        }
+        .btn-money {
+            background-image: linear-gradient(90deg, #ffff00, #bb6700);
+            color: white;
+        }
+    </style>
+    <div class="main">
+        <div class="page-title">
+            <div class="page-title-cell">
+                <b style="color: #b800fb">Меню игр</b>
+            </div>
+        </div>
+        <div class="page-other">
+            <div class="page-other-games-cell">
+                <div class="page-other-games-game-cell">
+                    <img src="dice.png" class="img-game-enter"/>
+                    <button type="button" onclick="diceEnter()" class="btn-game-enter">
+                        Dice
+                    </button>
+                </div>
+                <div class="page-other-games-game-cell">
+                    <img src="blackjack.png" class="img-game-enter"/>
+                    <button type="button" onclick="blackjackEnter()" class="btn-game-enter">
+                        Blackjack
+                    </button>
+                </div>
+            </div>
+            <div class="page-other-games-cell">
+                <div class="page-other-games-game-cell">
+                    <img src="mines.png" class="img-game-enter"/>
+                    <button type="button" onclick="minesEnter()" class="btn-game-enter">
+                        Mines
+                    </button>
+                </div>
+                <div class="page-other-games-game-cell">
+                    <img src="crash.png" class="img-game-enter"/>
+                    <button type="button" onclick="crashEnter()" class="btn-game-enter">
+                        Crash
+                    </button>
+                </div>
+            </div>
+            <div class="page-other-games-cell">
+                <div class="page-other-games-game-cell">
+                    <img src="guess.png" class="img-game-enter"/>
+                    <button type="button" onclick="guessEnter()" class="btn-game-enter">
+                        Guess
+                    </button>
+                </div>
+                <div class="page-other-games-game-cell">
+                    <img src="roulette.png" class="img-game-enter"/>
+                    <button type="button" onclick="rouletteEnter()" class="btn-game-enter">
+                        Roulette
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="nav">
+        <button type="button" id="Ref" onclick="toRef()" class="btn btn-nav">
+            Referal
+        </button>
+        <button type="button" id="Bal" onclick="toBal()" class="btn btn-nav">
+            Balance
+        </button>
+        <button type="button" id="Game" onclick="toGame()" class="btn btn-nav">
+            Game
+        </button>
+        <button type="button" id="Games" onclick="toGames()" class="btn btn-nav">
+            Games
+        </button>
+        <button type="button" id="Lottery" onclick="toLottery()" class="btn btn-nav">
+            Lottery
+        </button>
+    </div>
+</body>
+<style type="text/css">
+    .page-other-games-cell {
+        display: flex;
+        flex-direction: row;
+    }
+    .page-other-games-game-cell {
+        border: 1px solid #b0b0b0;
+        border-radius: 10%;
+        width: 40%;
+        margin: 5% 5%;
+        padding: 1%;
+        display: flex;
+        flex-direction: column;
+    }
+    .img-game-enter {
+        width: 38vw;
+        height: 10vh;
+        justify-content: center;
+        align-self: center;
+        padding: 10px;
+    }
+    .btn-game-enter {
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(90deg, #e50000, #ffb700);
+        color: white;
+        border: 1px solid #b0b0b0;
+        border-radius: 15%;
+        align-self: center;
+        justify-content: center;
+        font-size: 16px;
+        padding: 10px;
+        transition: all 0.2s;
+    }
+    .btn-game-enter:hover {
+        font-size: 20px;
+        padding: 0;
+        color: black;
+        background-image: linear-gradient(90deg, #ff0000, #ff9900);
+    }
+    .btn-game-enter:active {
+        color: grey;
+        font-size: 25px;
+    }
+</style>
+</html>

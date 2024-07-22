@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title</title>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="nav.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="main">
+        <div class="page-title">
+        </div>
+        <div class="page-other-dice">
+            <div class="dice-create">
+                <button onclick="createDice()" class="btn-dice-create">Создать игру</button>
+            </div>
+            <div class="dice-start-bot">
+                <button onclick="botStartDice()" class="btn-dice-create">Играть с ботом</button>
+            </div>
+            <div class="dice-table">
+                <button class="dice-join"><div class="dice-join-title">Го играть</div> <div class="dice-join-reward">13$</div></button>
+                <button class="dice-join"><div class="dice-join-title">Просрёшь - лох</div> <div class="dice-join-reward">13$</div></button>
+                <button class="dice-join"><div class="dice-join-title">Тест</div> <div class="dice-join-reward">13$</div></button>
+                <button class="dice-join"><div class="dice-join-title">Fafasdaf</div> <div class="dice-join-reward">13$</div></button>
+                <button class="dice-join"><div class="dice-join-title">АФАФАФАФ</div> <div class="dice-join-reward">13$</div></button>
+            </div>
+        </div>
+        <div id="popup" class="popup">
+            <div class="popup-content">
+                <h2>Создать игру</h2>
+                <form id="createForm">
+                    <label for="game-name">Название</label>
+                    <input type="text" id="game-name" name="game-name" maxlength="20" required>
+                    <label for="game-reward">Награда</label>
+                    <input type="text" id="game-reward" name="game-reward" required>
+                    <div class="popup-buttons">
+                        <button type="submit" class="btn-create">Создать</button>
+                        <button type="button" id="cancelButton" class="btn-cancel">Отменить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="leave-popup" class="popup">
+        <div class="popup-content">
+            <h2>Подтвердите выход</h2>
+            <p id="leave-message">Вы уверены, что хотите уйти?</p>
+            <div class="popup-buttons">
+                <button id="confirm-leave" class="btn-cancel">Да</button>
+                <button id="cancel-leave" class="btn-create">Нет</button>
+            </div>
+        </div>
+    </div>
+    <div class="nav">
+        <button type="button" id="Ref" onclick="toRef()" class="btn btn-nav">
+            Referal
+        </button>
+        <button type="button" id="Bal" onclick="toBal()" class="btn btn-nav">
+            Balance
+        </button>
+        <button type="button" id="Game" onclick="toGame()" class="btn btn-nav">
+            Game
+        </button>
+        <button type="button" id="Games" onclick="toGames()" class="btn btn-nav">
+            Games
+        </button>
+        <button type="button" id="Lottery" onclick="toLottery()" class="btn btn-nav">
+            Lottery
+        </button>
+    </div>
+</body>
+<script type="text/javascript">
+async function createDiceGame(name, reward) {
+    const response = await fetch(`/create-dice-game?name=${name}&reward=${reward}`);
+    if (response.ok) {
+        const data = await response.json();
+        return data;
+    } else {
+        throw new Error('Ошибка при создании игры');
+    }
+}
+
+function createDice() {
+    const popup = document.getElementById('popup');
+    popup.classList.add('show');
+}
+
+function closePopup() {
+    const popup = document.getElementById('popup');
+    popup.classList.remove('show');
+}
+
+document.getElementById('createForm').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+    const name = document.getElementById('game-name').value;
+    const reward = document.getElementById('game-reward').value;
+
+    if (name.length > 20) {
+        alert('Название не должно превышать 20 символов.');
+        return;
+    }
+
+    if (!/^\d+$/.test(reward)) {
+        alert('Награда должна содержать только цифры.');
+        return;
+    }
+
+    try {
+        const data = await createDiceGame(name, reward);
+        // Перенаправление пользователя на другую страницу
+        window.location.href = "/dice-game?room_id=$(data.hash)"; // Укажите URL страницы, на которую нужно перенаправить
+    } catch (error) {
+        console.error(error);
+        alert('Произошла ошибка при создании игры');
+    }
+    
+});
+
+document.getElementById('cancelButton').addEventListener('click', closePopup);
+
+document.getElementById('game-reward').addEventListener('input', function(event) {
+    this.value = this.value.replace(/\D/g, ''); // Удаляем все нецифровые символы
+});
+const leavePopup = document.getElementById('leave-popup');
+const confirmLeaveButton = document.getElementById('confirm-leave');
+const cancelLeaveButton = document.getElementById('cancel-leave');
+
+let navigateAwayUrl = '';
+
+function showLeavePopup(url) {
+    navigateAwayUrl = url;
+    leavePopup.classList.add('show');
+}
+
+function hideLeavePopup() {
+    leavePopup.classList.remove('show');
+    navigateAwayUrl = '';
+}
+
+confirmLeaveButton.addEventListener('click', () => {
+    hideLeavePopup();
+    window.removeEventListener('beforeunload', preventNavigation);
+    window.location.href = navigateAwayUrl;
+});
+
+cancelLeaveButton.addEventListener('click', hideLeavePopup);
+
+function preventNavigation(event) {
+    event.preventDefault();
+    showLeavePopup(event.target.activeElement.href);
+    event.returnValue = ''; // Chrome requires returnValue to be set
+}
+
+window.addEventListener('beforeunload', preventNavigation);
+
+window.addEventListener('click', (event) => {
+    const anchorElement = event.target.closest('a');
+    if (anchorElement) {
+        event.preventDefault();
+        showLeavePopup(anchorElement.href);
+    }
+});
+</script>
+<style type="text/css">
+:root {
+    --btn-active: #4CAF50;
+    --btn-color: #45a049;
+}
+
+body {
+    background-color: rgb(255, 255, 255);
+}
+.nav {
+    position:fixed;
+    bottom: 0;
+    left: 0;
+    width: 99.75vw;
+    border: black solid 1px;
+    border-radius: 1em 1em 0 0;
+    display: flex;
+    justify-content: space-evenly;
+    background-color: rgb(36, 32, 32);
+    height: 10%;
+    align-items: center;
+}
+.btn-nav {
+    border-radius: 1em;
+    border: white solid 1px;
+    width: 16%;
+    height: 75%;
+    background-image: linear-gradient(90deg, rgb(255, 0, 208) 0%, rgb(51, 0, 255) 100%);
+    color: white;
+    transition: all 0.2s;
+}
+.btn-nav:hover {
+    font-size: 15px;
+    color: rgb(36, 32, 32);
+}
+
+.page-title {
+    position: absolute;
+    background-color: black;
+    top: 0;
+    left: 0;
+    width: 99.7%;
+    height: 10vh;
+    border-radius: 0 0 1rem 1rem;
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.page-title-cell {
+    color: white;
+}
+.page-other {
+    background-color: rgb(255, 255, 255);
+    width: 99.7%;
+    margin-top: 11vh;
+    height: 72vh;
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+.cell {
+    display: flex;
+    width: 90%;
+    justify-content:center;
+    border: 1px solid #b0b0b0;
+    margin: 0.3em 0;
+    border-radius: 0.8em;
+    background-color: white;
+    height: 2.5em;
+    align-items: center;
+    font-size: 20px;
+}
+.btn-money {
+    background-image: linear-gradient(90deg, #ffff00, #bb6700);
+    color: white;
+    transition: transform 0.3s ease;
+}
+.btn-money:hover {
+    transform: scale(1.05);
+}
+.btn-money:active {
+    transform: scale(1.1);
+}
+.btn-active {
+    color: black;
+    transition: transform 0.3s ease;
+}
+.btn-active:hover {
+    transform: scale(1.05);
+}
+.btn-active:active {
+    transform: scale(1.1);
+}
+.page-other-games-cell {
+    display: flex;
+    flex-direction: row;
+}
+.page-other-games-game-cell {
+    border: 1px solid #b0b0b0;
+    border-radius: 10%;
+    width: 40%;
+    margin: 5% 5%;
+    padding: 1%;
+    display: flex;
+    flex-direction: column;
+}
+.img-game-enter {
+    width: 38vw;
+    height: 10vh;
+    justify-content: center;
+    align-self: center;
+    padding: 10px;
+}
+.btn-game-enter {
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, #e50000, #ffb700);
+    color: white;
+    border: none;
+    border-radius: 15%;
+    align-self: center;
+    justify-content: center;
+    font-size: 16px;
+    padding: 10px;
+    transition: all 0.5s;
+}
+.btn-game-enter:hover {
+    font-size: 20px;
+    padding: 0;
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+}
+
+.btn-game-enter:active {
+    color: grey;
+    font-size: 25px;
+}
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 300px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-content h2 {
+    margin-top: 0;
+}
+
+.popup-content label {
+    margin-bottom: 5px;
+}
+
+.popup-content input {
+    margin-bottom: 15px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Button Styles */
+.btn-create, .btn-cancel {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.btn-create {
+    background-image: linear-gradient(90deg, #4CAF50, #2E7D32);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-create:hover {
+    background-image: linear-gradient(90deg, #45a049, #1B5E20);
+    transform: scale(1.05);
+    color: black;
+}
+
+.btn-create:active {
+    background-image: linear-gradient(90deg, #45a049, #1B5E20);
+    color: white;
+    transform: scale(0.95);
+}
+
+.btn-cancel {
+    background-image: linear-gradient(90deg, #f44336, #c62828);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    transform: scale(1.05);
+    color: black;
+}
+
+.btn-cancel:active {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    color: white;
+    transform: scale(0.95);
+}
+.dice-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    margin-top: 11vh;
+}
+.dice-join {
+    background-color: #6200ea;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 80%;
+    text-align: center;
+}
+.dice-join .dice-join-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.dice-join .dice-join-reward {
+    font-size: 14px;
+    color: #d1c4e9;
+}
+.dice-join:hover {
+    background-color: #3700b3;
+    transform: scale(1.05);
+}
+.dice-join:active {
+    background-color: #03dac6;
+    transform: scale(0.95);
+}
+.dice-create {
+    position: absolute;
+    right: 2%;
+    top: 2%;
+}
+.dice-start-bot {
+    position: absolute;
+    left: 2%;
+    top: 2%;
+}
+.btn-dice-create {
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, #ffff00, #bb6700);
+    color: white;
+    border: none;
+    border-radius: 10%;
+    align-self: center;
+    justify-content: center;
+    font-size: 20px;
+    padding: 10px;
+    transition: all 0.2s;
+    border: 1px solid white;
+}
+.btn-dice-create:hover {
+    font-size: 25px;
+    transform: scale(1.05);
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+}
+.btn-dice-create:active {
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+    color: white;
+    font-size: 25px;
+    transform: scale(0.95);
+}
+</style>
+<script src="dice.js"></script>
+</html>

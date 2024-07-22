@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Dice Enter{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}
+<div class="page-title">
+</div>
+<div class="page-other-dice">
+    <div class="dice-create">
+        <button onclick="createDice()" class="btn-dice-create">Создать игру</button>
+    </div>
+    <div class="dice-start-bot">
+        <button onclick="botStartDice()" class="btn-dice-create">Играть с ботом</button>
+    </div>
+    <div class="dice-table">
+    </div>
+</div>
+{% endblock %}
+{% block aftermain %}
+<div id="create-game-popup" class="popup">
+    <div class="popup-content">
+        <h2>Создать игру</h2>
+        <form id="createForm">
+            <label for="game-name">Название</label>
+            <input type="text" id="game-name" name="game-name" maxlength="20" required>
+            <label for="game-reward">Награда</label>
+            <input type="text" id="game-reward" name="game-reward" required>
+            <div class="popup-buttons">
+                <button type="submit" class="btn-create">Создать</button>
+                <button type="button" id="cancel-button" class="btn-cancel">Отменить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="popup" class="popup">
+    <div class="popup-content">
+        <h2>Ошибка</h2>
+        <p id="alert-message">Комната заполнена</p>
+        <div class="popup-buttons">
+            <button id="close-popup" class="btn-create">Ок</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script src="{{ url_for('static', filename='js/blackjack_page.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Balance{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}
+<div class="page-title">
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Баланс:</b> {{ balance }} монет{{ balance_ending }}
+    </div>
+</div>
+<div class="page-other">
+    <button class="cell btn-active">
+        Вывод средств
+    </button>
+    <button class="cell btn-active">
+        Депозит средств
+    </button>
+    <button class="cell btn-active">
+        История выводов и депозитов
+    </button>
+</div>
+{% endblock %}
+{% block footer %}
+<script>
+    let ref = document.getElementById("Bal");
+    ref.style.color = "black";
+</script>
+{% endblock %}

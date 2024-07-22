@@ -1,11 +1,7 @@
 
-let letter = document.getElementById("letter");
+let tg = window.Telegram.WebApp;
+tg.expand();
 
-
-function changeLetter() {
-    let randomLetter = "Let's say wtf";
-    letter.textContent = randomLetter;
-}
 
 function games_exit() {
     // exit to #index.html

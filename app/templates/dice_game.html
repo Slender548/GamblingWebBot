@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Dice Enter{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}
+<div class="page-title">
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Противник:</b> <span id="player2Result">0</span>
+    </div>
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Вы:</b> <span id="player1Result">0</span>
+    </div>
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Награда💰:</b> {{ reward }}$
+    </div>
+    <div class="page-title-cell">
+        <span id="step">Ваш ход</span>
+    </div>
+</div>
+<div class="page-other">
+    <button type="button" class="cell btn-money" id="rollButton" disabled>Бросить кубик</button>
+    <div class="scene">
+        <div class="cube1">
+            <div class="cube__face cube__face--1">1</div>
+            <div class="cube__face cube__face--2">2</div>
+            <div class="cube__face cube__face--3">3</div>
+            <div class="cube__face cube__face--4">4</div>
+            <div class="cube__face cube__face--5">5</div>
+            <div class="cube__face cube__face--6">6</div>
+        </div>
+    </div>
+    <div class="scene">
+        <div class="cube2">
+            <div class="cube__face cube__face--1">1</div>
+            <div class="cube__face cube__face--2">2</div>
+            <div class="cube__face cube__face--3">3</div>
+            <div class="cube__face cube__face--4">4</div>
+            <div class="cube__face cube__face--5">5</div>
+            <div class="cube__face cube__face--6">6</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block aftermain %}
+<!-- Notification Popup -->
+<div id="dice-popup" class="popup">
+    <div class="popup-content">
+        <h2 id="dice-title"></h2>
+    </div>
+</div>
+<!-- Leave Confirmation Popup -->
+<div id="leave-popup" class="popup">
+    <div class="popup-content">
+        <h2>Подтвердите выход</h2>
+        <p id="leave-message">Вы уверены, что хотите уйти?</p>
+        <div class="popup-buttons">
+            <button id="confirm-leave" class="btn-cancel">Да</button>
+            <button id="cancel-leave" class="btn-create">Нет</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script src="{{ url_for('static', filename='js/dice_game.js') }}">
+    const roomId = "{{ room_id }}";
+    const playerId = "{{ player_id }}";
+    const reward = "{{ reward }}";
+</script>
+{% endblock %}

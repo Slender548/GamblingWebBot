@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+    <div class="main">
+        {% block main %}
+        {% endblock %}
+    </div>
+    {% block aftermain %}
+    {% endblock %}
+    <div class="nav">
+        <button type="button" id="Ref" onclick="toRef()" class="btn btn-nav">
+            Ref
+        </button>
+        <button type="button" id="Bal" onclick="toBal()" class="btn btn-nav">
+            Balan
+        </button>
+        <button type="button" id="Game" onclick="toGame()" class="btn btn-nav">
+            Game
+        </button>
+        <button type="button" id="Games" onclick="toGames()" class="btn btn-nav">
+            Games
+        </button>
+        <button type="button" id="Lottery" onclick="toLottery()" class="btn btn-nav">
+            Lottery
+        </button>
+    </div>
+</body>
+{% block footer %}{% endblock %}
+</html>

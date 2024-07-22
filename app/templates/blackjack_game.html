@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Dice Enter{% endblock %}
+{% block head %}
+{% endblock %}
+{% block main %}
+<div class="page-title">
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Противник:</b> <span id="player2Result">0</span>
+    </div>
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Вы:</b> <span id="player1Result">0</span>
+    </div>
+    <div class="page-title-cell">
+        <b style="color: #b800fb">Награда💰:</b> {{ reward }}$
+    </div>
+    <div class="page-title-cell">
+        <span id="step">Ваш ход</span>
+    </div>
+</div>
+<div class="page-other">
+    <div class="cell cell-dividable">
+        <button type="button" class="btn-money" id="takeButton" disabled>Ещё</button>
+        <button type="button" class="btn-money" id="passButton" disabled>Хватит</button>
+    </div>
+    <div class="card-hand-self">
+        <img src="{{ url_for('static', filename='img/blackjack/2_h.svg') }}" width="30%"/>
+        <img src="{{ url_for('static', filename='img/blackjack/2_d.svg') }}" width="30%"/>
+        <img src="{{ url_for('static', filename='img/blackjack/2_c.svg') }}" width="30%"/>
+        <img src="{{ url_for('static', filename='img/blackjack/2_s.svg') }}" width="30%"/>
+    </div>
+    <div class="card-hand-opponent">
+        <img src="{{ url_for('static', filename='img/blackjack/back.svg') }}" width="30%"/>
+    </div>
+</div>
+{% endblock %}
+{% block aftermain %}
+<style>
+.card-hand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 200px; /* Adjust as needed */
+}
+
+.card-hand img {
+    position: absolute;
+    bottom: 0;
+    transform-origin: bottom center;
+    width: 80px; /* Adjust as needed */
+    height: auto;
+}
+</style>
+<!-- Notification Popup -->
+<div id="dice-popup" class="popup">
+    <div class="popup-content">
+        <h2 id="dice-title"></h2>
+    </div>
+</div>
+<!-- Leave Confirmation Popup -->
+<div id="leave-popup" class="popup">
+    <div class="popup-content">
+        <h2>Подтвердите выход</h2>
+        <p id="leave-message">Вы уверены, что хотите уйти?</p>
+        <div class="popup-buttons">
+            <button id="confirm-leave" class="btn-cancel">Да</button>
+            <button id="cancel-leave" class="btn-create">Нет</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script src="{{ url_for('static', filename='js/blackjack_game.js') }}">
+    const roomId = "{{ room_id }}";
+    const playerId = "{{ player_id }}";
+    const reward = "{{ reward }}";
+</script>
+{% endblock %}
