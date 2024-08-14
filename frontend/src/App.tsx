@@ -14,22 +14,30 @@ import Roulette from "./components/Roulette.tsx";
 import BlackjackPage from "./components/Blackjack_page.tsx";
 import BlackjackBot from "./components/Blackjack_bot.tsx";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import "./App.css";
 
 function App() {
-  //connect JWT Token
-
+  const { initDataRaw } = retrieveLaunchParams();
   useEffect(() => {
-    // Fetch player data from API
-    const playerId = "1331282319";
-    fetch(`/api/player/${playerId}`, { method: "GET" })
+    fetch("/api/initdata/check", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ initDataRaw }),
+    })
       .then((response) => response.json())
-      .then((response) => {
-        if (response.status !== 200) {
-          return <></>;
+      .then((data) => {
+        if (!data.ok) {
+          return <h1>Run it in telegram mini apps.</h1>;
         }
+      })
+      .catch(() => {
+        return <h1>Run it in telegram mini apps.</h1>;
       });
   });
+
   return (
     <>
       <TonConnectUIProvider
@@ -48,10 +56,7 @@ function App() {
           <Route path="/mines" element={<Mines />} />
           <Route path="/crash" element={<Crash />} />
           <Route path="/roulette" element={<Roulette />} />
-          <Route
-            path="/blackjack_game/:roomId/:playerId/:reward"
-            element={<Blackjack />}
-          />
+          <Route path="/blackjack_game" element={<Blackjack />} />
         </Routes>
         <NavBar />
       </TonConnectUIProvider>

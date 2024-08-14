@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import _2_h from "../assets/blackjack/2_h.svg";
 import _2_s from "../assets/blackjack/2_s.svg";
 import _2_c from "../assets/blackjack/2_c.svg";
@@ -54,14 +54,9 @@ import _a_c from "../assets/blackjack/a_c.svg";
 import _a_d from "../assets/blackjack/a_d.svg";
 import back from "../assets/blackjack/back.svg";
 
-interface BlackjackProps {
-  roomId: string;
-  playerId: string;
-  reward: number;
-}
-
-const BlackjackGame: React.FC<BlackjackProps> = () => {
-  const { roomId, playerId, reward } = useParams<BlackjackProps>();
+const BlackjackGame: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const roomId = searchParams.get("room_id");
   const [steps, setSteps] = useState(-1);
   const [cards, setCards] = useState({ p1: 0, p2: 0 });
   const [player1Result, setPlayer1Result] = useState(0);

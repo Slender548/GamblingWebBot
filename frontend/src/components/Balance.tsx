@@ -1,37 +1,93 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTonConnectUI } from "@tonconnect/ui-react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
-function Balance() {
-  const balance: number = 10;
-  // useEffect(() => {
-  //     // Fetch player data from API
-  //     const playerId = "1331282319";
-  //       fetch(`/api/player/${playerId}`, {method: "GET"})
-  //       .then(response => response.json())
-  //       .then(response => {
-  //         if (!response.ok)
-  //           {return <></>}
-  //         else {
-  //             const player = response.player;
-  //             console.log(response)
-  //             balance = player[5];
-  //         }
-  //       });
-  //   }, []);
-  const balance_ending: string =
-    balance % 10 === 1 && balance % 100 !== 11
+interface Transaction {
+  id: string;
+  transaction_type: string;
+  amount: number;
+  created_at: string;
+  transaction_hash: string;
+  confirmed: boolean;
+}
+
+/**
+ * A functional component that displays the user's balance and provides options to withdraw, deposit, and view transaction history.
+ *
+ * @return {JSX.Element} The JSX element representing the balance page.
+ */
+export default function Balance(): JSX.Element {
+  const { initDataRaw, initData } = retrieveLaunchParams();
+  const [withdrawPopup, setWithdrawPopup] = useState<boolean>(false);
+  const [depositPopup, setDepositPopup] = useState<boolean>(false);
+  const [historyPopup, setHistoryPopup] = useState<boolean>(false);
+  const [dollarBalance, setDollarBalance] = useState<number>(0);
+  const [moneyBalance, setMoneyBalance] = useState<number>(0);
+  const [transactions, setTransactions] = useState<Array<Transaction>>([]);
+  const withdrawAmount = useRef<HTMLInputElement | null>(null);
+  const depositAmount = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    /**
+     * Fetches player data from the API and updates the dollar and money balances.
+     *
+     * @return {Promise<void>}
+     */
+    const fetchData = async (): Promise<void> => {
+      const response = await fetch("/api/player", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+          player_id: initData?.user?.id,
+        }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setDollarBalance(data.player.dollar_balance);
+        setMoneyBalance(data.player.money_balance);
+      } else {
+        window.location.href = "/register";
+      }
+    };
+    fetchData();
+  }, [initData?.user?.id, initDataRaw]);
+  useEffect(() => {
+    /**
+     * Fetches the transaction history from the API and updates the transactions state.
+     *
+     * @return {Promise<void>}
+     */
+    const fetchHistory = async (): Promise<void> => {
+      const response = await fetch("/api/transactions", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+          player_id: initData?.user?.id,
+        }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setTransactions(data.data);
+      }
+    };
+    fetchHistory();
+  });
+
+  const moneyEnding: string =
+    moneyBalance % 10 === 1 && moneyBalance % 100 !== 11
       ? "монета"
-      : 2 <= balance % 10 &&
-        balance % 10 <= 4 &&
-        !(12 <= balance % 100 && balance % 100 <= 14)
+      : 2 <= moneyBalance % 10 &&
+        moneyBalance % 10 <= 4 &&
+        !(12 <= moneyBalance % 100 && moneyBalance % 100 <= 14)
       ? "монеты"
       : "монет";
 
-  const [withdrawPopup, setWithdrawPopup] = useState(false);
-  const [depositPopup, setDepositPopup] = useState(false);
-  const [historyPopup, setHistoryPopup] = useState(false);
-
-  const showWithdrawPopup = () => {
+  const showWithdrawPopup = (): JSX.Element => {
     const closeWithdraw = () => {
       const popup = document.getElementById("withdrawPopup");
       popup?.classList.remove("show");
@@ -40,11 +96,7 @@ function Balance() {
       }, 100);
     };
 
-    const withdraw = () => {
-      // Logic to withdraw money from the balance
-      console.log("Withdrawal initiated");
-      closeWithdraw();
-    };
+    const withdraw = () => {};
 
     return (
       <div className="popup" id="withdrawPopup">
@@ -53,7 +105,7 @@ function Balance() {
           <label>Сумма вывода($):</label>
           <input
             type="number"
-            id="withdrawAmount"
+            ref={withdrawAmount}
             min="5"
             step="0.01"
             placeholder="Мин 5$"
@@ -78,8 +130,8 @@ function Balance() {
     );
   };
 
-  const showDepositPopup = () => {
-    const closeDeposit = () => {
+  const showDepositPopup = (): JSX.Element => {
+    const closeDeposit = (): void => {
       const popup = document.getElementById("depositPopup");
       popup?.classList.remove("show");
       setTimeout(() => {
@@ -87,7 +139,7 @@ function Balance() {
       }, 100);
     };
 
-    const deposit = () => {
+    const deposit = (): void => {
       // Logic to deposit money to the balance
       console.log("Deposit initiated");
       closeDeposit();
@@ -100,7 +152,7 @@ function Balance() {
           <label>Сумма вывода($):</label>
           <input
             type="number"
-            id="depositAmount"
+            ref={depositAmount}
             min="5"
             step="0.01"
             placeholder="Мин 5$"
@@ -125,8 +177,8 @@ function Balance() {
     );
   };
 
-  const showHistoryPopup = () => {
-    const closeHistory = () => {
+  const showHistoryPopup = (): JSX.Element => {
+    const closeHistory = (): void => {
       const popup = document.getElementById("historyPopup");
       popup?.classList.remove("show");
       setTimeout(() => {
@@ -147,6 +199,14 @@ function Balance() {
               <p>Вывод: 10 SOL</p>
               <p>2023-07-23</p>
             </div>
+            {transactions?.map((transaction) => (
+              <div className="cell">
+                <p>
+                  {transaction.transaction_type}: {transaction.amount} $
+                </p>
+                <p>{transaction.created_at}</p>
+              </div>
+            ))}
           </div>
           <div className="popup-buttons">
             <button className="btn-cancel" onClick={closeHistory}>
@@ -158,7 +218,7 @@ function Balance() {
     );
   };
 
-  const setShowWithdrawPopup = () => {
+  const setShowWithdrawPopup = (): void => {
     setWithdrawPopup(true);
     setTimeout(() => {
       const popup = document.getElementById("withdrawPopup");
@@ -166,7 +226,7 @@ function Balance() {
     }, 10);
   };
 
-  const setShowDepositPopup = () => {
+  const setShowDepositPopup = (): void => {
     setDepositPopup(true);
     setTimeout(() => {
       const popup = document.getElementById("depositPopup");
@@ -174,7 +234,7 @@ function Balance() {
     }, 10);
   };
 
-  const setShowHistoryPopup = () => {
+  const setShowHistoryPopup = (): void => {
     setHistoryPopup(true);
 
     setTimeout(() => {
@@ -189,8 +249,11 @@ function Balance() {
     <>
       <div className="page-title">
         <div className="page-title-cell">
-          <b className="page-title-cell-title"> Баланс:</b> {balance}{" "}
-          {balance_ending}
+          <b className="page-title-cell-title"> Монет:</b> {moneyBalance}{" "}
+          {moneyEnding}
+        </div>
+        <div className="page-title-cell">
+          <b className="page-title-cell-title"> Долларов:</b> {dollarBalance} $
         </div>
       </div>
       <div className="page-other">
@@ -231,5 +294,3 @@ function Balance() {
     </>
   );
 }
-
-export default Balance;

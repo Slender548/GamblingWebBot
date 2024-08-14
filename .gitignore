@@ -1,0 +1,4 @@
+.env
+/ReactApp
+__pycache__
+tasks.db

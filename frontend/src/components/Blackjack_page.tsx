@@ -1,12 +1,40 @@
-import { RefObject, useRef, useState } from "react";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
+import { RefObject, useEffect, useRef, useState } from "react";
+
+interface BlackjackRoom {
+  name: string;
+  reward: number;
+  room_id: string;
+}
 
 const BlackjackPage = () => {
   const [notifyPopup, setNotifyPopup] = useState<string | null>(null);
   const [showClass, setShowClass] = useState<boolean>(false);
   const [createPopup, setCreatePopup] = useState<boolean>(false);
+  const [rooms, setRooms] = useState<Array<BlackjackRoom>>([]);
   const nameRef: RefObject<HTMLInputElement> = useRef(null);
   const rewardRef: RefObject<HTMLInputElement> = useRef(null);
-  const rooms = [{ name: "Фафаф", reward: 23, room_id: "fafafa" }];
+  const { initDataRaw, initData } = retrieveLaunchParams();
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      const response = await fetch("/api/blackjack/rooms", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+          player_id: initData?.user?.id,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setRooms(data.rooms);
+      }
+    };
+    fetchRooms();
+  }, [initDataRaw, initData?.user?.id]);
 
   const showNotifyPopup = (message: string) => {
     setNotifyPopup(message);
@@ -29,12 +57,17 @@ const BlackjackPage = () => {
       showNotifyPopup("Необходимо заполнить все поля");
       return;
     }
-    const response = await fetch("/api/dice/create", {
+    const response = await fetch("/api/blackjack/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name: name, reward: reward }),
+      body: JSON.stringify({
+        initData: initDataRaw,
+        player_id: initData?.user?.id,
+        name: name,
+        reward: reward,
+      }),
     });
 
     if (!response.ok) {
@@ -62,12 +95,16 @@ const BlackjackPage = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ room_id: room_id }),
+      body: JSON.stringify({
+        initData: initDataRaw,
+        player_id: initData?.user?.id,
+        room_id: room_id,
+      }),
     });
     if (!response.ok) {
       const data = await response.json();
       showNotifyPopup(data.msg);
-      return;
+      //return;
     }
 
     const data: {
@@ -104,8 +141,8 @@ const BlackjackPage = () => {
   };
 
   const createGame = () => {
-    createBlackjack();
     closeCreatePopup();
+    createBlackjack();
   };
 
   const showCreatePopup = () => {
@@ -149,21 +186,16 @@ const BlackjackPage = () => {
           </button>
         </div>
         <div className="dice-table">
-          {rooms.map(
-            (
-              room: { name: string; reward: number; room_id: string },
-              index: number
-            ) => (
-              <button
-                className="dice-join"
-                key={index}
-                onClick={joinBlackjack(room.room_id)}
-              >
-                <div className="dice-join-title">{room.name}</div>
-                <div className="dice-join-reward">{room.reward}$</div>
-              </button>
-            )
-          )}
+          {rooms.map((room, index: number) => (
+            <button
+              className="dice-join"
+              key={index}
+              onClick={() => joinBlackjack(room.room_id)}
+            >
+              <div className="dice-join-title">{room.name}</div>
+              <div className="dice-join-reward">{room.reward}$</div>
+            </button>
+          ))}
         </div>
       </div>
       {createPopup && showCreatePopup()}
