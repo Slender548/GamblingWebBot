@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import _2_h from "../assets/blackjack/2_h.svg";
@@ -53,109 +54,183 @@ import _a_s from "../assets/blackjack/a_s.svg";
 import _a_c from "../assets/blackjack/a_c.svg";
 import _a_d from "../assets/blackjack/a_d.svg";
 import back from "../assets/blackjack/back.svg";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
 const BlackjackGame: React.FC = () => {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("room_id");
-  const [steps, setSteps] = useState(-1);
-  const [cards, setCards] = useState({ p1: 0, p2: 0 });
-  const [player1Result, setPlayer1Result] = useState(0);
-  const [player2Result, setPlayer2Result] = useState(0);
-  const [activePlayer, setActivePlayer] = useState<string | null>(null);
+  const { initDataRaw, initData } = retrieveLaunchParams();
+  const playerId = initData?.user?.id;
+  const [steps, setSteps] = useState<number>(-1);
+  const [notifyPopup, setNotifyPopup] = useState<string | null>(null);
+  const [player1Result, setPlayer1Result] = useState<number>(0);
+  const [player2Result, setPlayer2Result] = useState<number>(0);
+  const [activePlayer, setActivePlayer] = useState<boolean>(false);
   const [selfHand, setSelfHand] = useState<string[]>([]);
   const [opponentHand, setOpponentHand] = useState<string[]>([]);
+  const [hiddenCards, setHiddenCards] = useState<boolean>(false);
+  const [reward, setReward] = useState<number>(0);
+  // const cardsMap = {
+  //   "2_h": _2_h,
+  //   "2_s": _2_s,
+  //   "2_c": _2_c,
+  //   "2_d": _2_d,
+  //   "3_h": _3_h,
+  //   "3_s": _3_s,
+  //   "3_c": _3_c,
+  //   "3_d": _3_d,
+  //   "4_h": _4_h,
+  //   "4_s": _4_s,
+  //   "4_c": _4_c,
+  //   "4_d": _4_d,
+  //   "5_h": _5_h,
+  //   "5_s": _5_s,
+  //   "5_c": _5_c,
+  //   "5_d": _5_d,
+  //   "6_h": _6_h,
+  //   "6_s": _6_s,
+  //   "6_c": _6_c,
+  //   "6_d": _6_d,
+  //   "7_h": _7_h,
+  //   "7_s": _7_s,
+  //   "7_c": _7_c,
+  //   "7_d": _7_d,
+  //   "8_h": _8_h,
+  //   "8_s": _8_s,
+  //   "8_c": _8_c,
+  //   "8_d": _8_d,
+  //   "9_h": _9_h,
+  //   "9_s": _9_s,
+  //   "9_c": _9_c,
+  //   "9_d": _9_d,
+  //   "10_h": _10_h,
+  //   "10_s": _10_s,
+  //   "10_c": _10_c,
+  //   "10_d": _10_d,
+  //   j_h: _j_h,
+  //   j_s: _j_s,
+  //   j_c: _j_c,
+  //   j_d: _j_d,
+  //   q_h: _q_h,
+  //   q_s: _q_s,
+  //   q_c: _q_c,
+  //   q_d: _q_d,
+  //   k_h: _k_h,
+  //   k_s: _k_s,
+  //   k_c: _k_c,
+  //   k_d: _k_d,
+  //   a_h: _a_h,
+  //   a_s: _a_s,
+  //   a_c: _a_c,
+  //   a_d: _a_d,
+  // };
 
   useEffect(() => {
-    const interval = setInterval(getBlackjackUpdates, 3000);
+    const getReward = async () => {
+      try {
+        const response = await fetch("api/blackjack/get_reward", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ room_id: roomId }),
+        });
+        const data = await response.json();
+        setReward(data.reward);
+      } catch {
+        showNotifyPopup("Произошла ошибка.");
+      }
+    };
+    getReward();
+  }, []);
+  useEffect(() => {
+    const interval = setInterval(getBlackjackUpdates, 1500);
     return () => clearInterval(interval);
   }, []);
 
   const getBlackjackUpdates = async () => {
     try {
-      const response = await fetch(`/get_blackjack_updates?room_id=${roomId}`);
+      const response = await fetch("api/blackjack/get_updates", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ player_id: playerId, room_id: roomId }),
+      });
       const data = await response.json();
-      if (playerId === "p1") {
-        setPlayer1Result(data.blackjack_results.p1);
-        setPlayer2Result(data.blackjack_results.p2);
-        if (data.blackjack_hands.p2.length > cards.p2) {
-          addCardOpponent();
-          setCards((prevCards) => ({ ...prevCards, p2: prevCards.p2 + 1 }));
+      if (response.ok) {
+        if (data.msg !== "Обновления успешно получены.") {
+          showNotifyPopup(data.msg);
         }
-      } else {
-        setPlayer1Result(data.blackjack_results.p2);
-        setPlayer2Result(data.blackjack_results.p1);
-        if (data.blackjack_hands.p1.length > cards.p1) {
-          addCardOpponent();
-          setCards((prevCards) => ({ ...prevCards, p1: prevCards.p1 + 1 }));
-        }
-      }
-
-      const buttonDisabled = playerId !== data.active_player;
-      setActivePlayer(data.active_player);
-
-      if (
-        data.blackjack_count.p1 === data.blackjack_count.p2 &&
-        steps !== data.blackjack_count.p1
-      ) {
-        setSteps(data.blackjack_count.p1);
-        if (playerId === "p1") {
-          clearCards(data.blackjack_hands.p1);
-          checkWinner(data.blackjack_hands.p1, data.blackjack_hands.p2);
+        setSelfHand(data.data.self.hands);
+        setPlayer1Result(data.data.self.results);
+        setPlayer2Result(data.data.opponent.results);
+        setActivePlayer(data.data.active_player);
+        if (
+          data.self.count == data.opponent.count &&
+          steps !== data.self.count
+        ) {
+          setSteps(data.self.count);
+          checkWinner(data.self.hands, opponentHand, data.opponent.hands);
         } else {
-          clearCards(data.blackjack_hands.p2);
-          checkWinner(data.blackjack_hands.p2, data.blackjack_hands.p1);
+          setOpponentHand(data.data.opponent.hands);
         }
-        setSteps(steps + 1);
       }
     } catch (error) {
-      console.error("Error fetching blackjack updates:", error);
+      showNotifyPopup("Произошла ошибка.");
     }
-  };
-
-  const addCardSelf = (card: string) => {
-    const newSelfHand = [...selfHand, card];
-    setSelfHand(newSelfHand);
-  };
-
-  const addCardOpponent = () => {
-    const newOpponentHand = [...opponentHand, "back"];
-    setOpponentHand(newOpponentHand);
-  };
-
-  const clearCards = (selfCards: string[]) => {
-    setSelfHand(selfCards);
-    setOpponentHand(Array(2).fill("back"));
   };
 
   const takeCard = async () => {
     try {
-      const response = await fetch(
-        `/take_card?room_id=${roomId}&player=${playerId}`
-      );
+      const response = await fetch("/api/blackjack/take", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+          player_id: playerId,
+          room_id: roomId,
+        }),
+      });
       const data = await response.json();
-      if (data.error) {
-        showNotifyPopup(data.error);
+      if (data.ok) {
+        setSelfHand(data.hand);
+        if (data.status === 202) {
+          showNotifyPopup("Перебор!");
+          if (data.opponent) {
+            setHiddenCards(true);
+            setTimeout(() => setHiddenCards(false), 1000);
+          }
+        }
       } else {
-        addCardSelf(data.card);
+        showNotifyPopup(data.msg);
       }
     } catch (error) {
-      console.error("Error taking card:", error);
+      showNotifyPopup("Ошибка!");
     }
   };
 
   const passTurn = async () => {
     try {
-      const response = await fetch(
-        `/pass_turn?room_id=${roomId}&player=${playerId}`
-      );
+      const response = await fetch("/api/blackjack/pass", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+          player_id: playerId,
+          room_id: roomId,
+        }),
+      });
       const data = await response.json();
-      if (data.error) {
-        showNotifyPopup(data.error);
-      } else {
-        setActivePlayer(null); // Assuming passing turn disables the buttons
+      if (!data.ok) {
+        showNotifyPopup(data.msg);
       }
     } catch (error) {
-      console.error("Error passing turn:", error);
+      showNotifyPopup("Ошибка!");
     }
   };
 
@@ -185,23 +260,31 @@ const BlackjackGame: React.FC = () => {
     return total;
   };
 
-  const checkWinner = (hand1: string[], hand2: string[]) => {
+  const checkWinner = (
+    hand1: string[],
+    hand2: string[],
+    opponent_current_hands: string[]
+  ) => {
+    setHiddenCards(true);
     const score1 = parseHand(hand1);
     const score2 = parseHand(hand2);
     if (score1 > 21) {
-      showNotifyPopup("Player 1 Busts! Player 2 Wins!");
+      showNotifyPopup("Перебор! Вы проиграли.");
     } else if (score2 > 21) {
-      showNotifyPopup("Player 2 Busts! Player 1 Wins!");
+      showNotifyPopup("Противник перебрал! Вы выиграли!");
     } else if (score1 > score2) {
-      showNotifyPopup("Player 1 Wins!");
+      showNotifyPopup("Вы выиграли!");
     } else if (score2 > score1) {
-      showNotifyPopup("Player 2 Wins!");
+      showNotifyPopup("Вы проиграли.");
     } else {
-      showNotifyPopup("It's a Tie!");
+      showNotifyPopup("Ничья");
     }
+    setTimeout(() => {
+      setHiddenCards(false);
+      setOpponentHand(opponent_current_hands);
+    }, 1400);
   };
 
-  const [notifyPopup, setNotifyPopup] = useState<string | null>(null);
   const showNotifyPopup = (message: string) => {
     setNotifyPopup(message);
     setTimeout(() => {
@@ -224,9 +307,7 @@ const BlackjackGame: React.FC = () => {
           <b className="page-title-cell-title">Награда💰:</b> {reward}$
         </div>
         <div className="page-title-cell">
-          <span>
-            {activePlayer === playerId ? "Ваш ход" : "Ход противника"}
-          </span>
+          <span>{activePlayer ? "Ваш ход" : "Ход противника"}</span>
         </div>
       </div>
       <div className="page-other">
@@ -235,7 +316,7 @@ const BlackjackGame: React.FC = () => {
             type="button"
             className="btn-money take-button"
             onClick={takeCard}
-            disabled={activePlayer !== playerId}
+            disabled={!activePlayer}
           >
             Ещё
           </button>
@@ -243,16 +324,16 @@ const BlackjackGame: React.FC = () => {
             type="button"
             className="btn-money pass-button"
             onClick={passTurn}
-            disabled={activePlayer !== playerId}
+            disabled={!activePlayer}
           >
             Хватит
           </button>
         </div>
         <div className="card-hand-self">
-          {selfHand.map((card, index) => (
+          {selfHand.map((card: string, index: number) => (
             <img
               key={index}
-              src={`static/img/blackjack/${card}.svg`}
+              src={`_${card}`}
               width="10%"
               style={{
                 transform: `rotate(${calculateAngle(
@@ -267,7 +348,7 @@ const BlackjackGame: React.FC = () => {
           {opponentHand.map((card, index) => (
             <img
               key={index}
-              src={`static/img/blackjack/${card}.svg`}
+              src={hiddenCards ? back : `_${card}`}
               width="10%"
               style={{
                 transform: `rotate(${calculateAngle(

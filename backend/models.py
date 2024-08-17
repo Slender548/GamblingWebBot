@@ -40,7 +40,7 @@ class Wallets(Model):
     __tablename__ = "wallets"
 
     wallet_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
     blockchain: Mapped[str] = mapped_column(String(16), nullable=False)
     address: Mapped[str] = mapped_column(String(128),
                                          unique=True,
@@ -52,7 +52,7 @@ class Bets(Model):
     __tablename__ = "bets"
 
     bet_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
     amount: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime]
@@ -65,11 +65,11 @@ class FinishedGame(Model):
 
     game_id: Mapped[int] = mapped_column(primary_key=True)
     game_type: Mapped[int] = mapped_column(nullable=False)
-    first_user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
+    first_user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
     second_user_id: Mapped[int | None] = mapped_column(
-        ForeignKey('users.user_id'), nullable=True)
+        ForeignKey('users.telegram_id'), nullable=True)
     amount: Mapped[int] = mapped_column(nullable=False)
-    game_hash: Mapped[int] = mapped_column(default=str(uuid4()))
+    game_hash: Mapped[int] = mapped_column(nullable=False)
     resolved_at: Mapped[datetime] = mapped_column(
         nullable=False, default=db.func.current_timestamp())
 
@@ -78,26 +78,36 @@ class Referrals(Model):
     __tablename__ = "referrals"
 
     referral_id: Mapped[int] = mapped_column(primary_key=True)
-    referrer_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'),
+    referrer_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'),
                                              nullable=False)
-    referred_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'),
+    referred_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'),
                                              nullable=False)
     bonus: Mapped[float] = mapped_column(default=0)
-    status: Mapped[bool] = mapped_column(default=False)
+    status: Mapped[bool] = mapped_column(nullable=True, default=None)
 
 
 class Transactions(Model):
     __tablename__ = "transactions"
 
     transaction_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
+    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
     amount: Mapped[float] = mapped_column(nullable=False)
     transaction_hash: Mapped[str] = mapped_column(str(uuid4()))
     transaction_type: Mapped[int] = mapped_column(nullable=False)
-    transaction_data: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         default=db.func.current_timestamp())
     confirmed_at: Mapped[datetime] = mapped_column(nullable=True, default=None)
+
+
+class LotteryTransactions(Model):
+    __tablename__ = "lottery_transactions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    amount: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        default=db.func.current_timestamp())
+    confirmed_at: Mapped[datetime] = mapped_column(nullable=True)
 
 
 async def create_tables():
@@ -107,9 +117,3 @@ async def create_tables():
 
 if __name__ == "backend.models":
     asyncio.run(create_tables())
-#     print(asyncio.run(get_user(2134)).username)
-#     # asyncio.run(
-#     #     insert_to_table(telegram_id="642",
-#     #                     username="howdidyougetthere",
-#     #                     wallet_address="maybe"))
-#     asyncio.run(select_table(2))

@@ -301,6 +301,130 @@ async def get_finished_games() -> List[FinishedGame]:
         return games
 
 
+async def get_count_users() -> int:
+    """
+        Get count of all users
+    """
+    async with new_session() as session:
+        query = select(func.count(Users.user_id))
+        result = await session.execute(query)
+        count = result.scalar()
+        return count
+
+
+async def get_users(page: int = 1) -> List[Users]:
+    """
+        Get list of users
+
+        Args:
+            page (int): Page number
+
+        Returns:
+            List[Users]: List of users
+    """
+    async with new_session() as session:
+        query = select(Users).offset((page - 1) * 10).limit(10)
+        result = await session.execute(query)
+        users = result.scalars().all()
+        return users
+
+
+async def get_balances(page: int = 1) -> List[tuple[int, str, float]]:
+    """
+        Get list of balances
+
+        Args:
+            page (int): Page number
+
+        Returns:
+            List[tuple[int, str, float]]: List of balances
+                tuple[int, str, float]: (user_id, username, balance)
+    """
+    async with new_session() as session:
+        query = select(Users.telegram_id, Users.dollar_balance,
+                       Users.money_balance).offset((page - 1) * 10).limit(10)
+        result = await session.execute(query)
+        balances = result.all()
+        return balances
+
+
+async def get_count_transactions() -> int:
+    """
+        Get count of all transactions
+    """
+    async with new_session() as session:
+        query = select(db.func.count(Transactions.transaction_id))
+        #TODO: REMADE
+        result = await session.execute(query)
+        count = result.scalar()
+        return count
+
+
+async def get_transactions(page: int = 1) -> List[Transactions]:
+    """
+        Get list of transactions
+
+        Args:
+            page (int): Page number
+
+        Returns:
+            List[Transactions]: List of transactions
+    """
+    async with new_session() as session:
+        #TODO: REMADE
+        query = select(Transactions).offset((page - 1) * 10).limit(10)
+        result = await session.execute(query)
+        transactions = result.scalars().all()
+        return transactions
+
+
+async def get_count_referrals() -> int:
+    """
+        Get count of all referalls
+    """
+    async with new_session() as session:
+        #TODO: REMADE
+        query = select(func.count(Referrals.referral_id))
+        result = await session.execute(query)
+        count = result.scalar()
+        return count
+
+
+async def get_referral(id) -> Referrals:
+    """
+        Get referral
+
+        Args:
+            id (int): User id
+
+        Returns:
+            Referrals: Referral
+    """
+    async with new_session() as session:
+        query = select(Referrals).where(Referrals.referrer_id == id)
+        result = await session.execute(query)
+        referrals = result.scalars().first()
+        return referrals
+
+
+async def get_referrals(page: int = 1) -> List[Referrals]:
+    """
+        Get list of referrals
+
+        Args:
+            page (int): Page number
+
+        Returns:
+            List[Referrals]: List of referrals
+    """
+    async with new_session() as session:
+        #TODO: REMADE
+        query = select(Referrals).offset((page - 1) * 10).limit(10)
+        result = await session.execute(query)
+        referrals = result.scalars().all()
+        return referrals
+
+
 print(asyncio.run(create_user("2134", "ohmygod", "212wwdaafas")))
 print(asyncio.run(create_transaction(1, 500, 1, "Прикол")))
 asyncio.run(select_transactions())

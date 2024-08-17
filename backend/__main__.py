@@ -65,9 +65,9 @@ async def create_player(request: CreateUserRequest):
     wallet_address = request.wallet_address
     username = request.username
     telegram_id = request.telegram_id
-    if db.create_user(telegram_id=telegram_id,
-                      username=username,
-                      wallet_address=wallet_address):
+    if (await db.create_user(telegram_id=telegram_id,
+                             username=username,
+                             wallet_address=wallet_address)):
         return {"msg": "Игрок успешно создан", "ok": True, "status": 201}
     else:
         return {"ok": False, "status": 400, "msg": "Ошибка создания игрока"}
@@ -81,8 +81,8 @@ async def create_transaction(request: TransactionRequest):
     transaction_type = request.transaction_type
     transaction_data = request.transaction_data
 
-    if db.create_transaction(request.telegram_id, amount, transaction_type,
-                             transaction_data):
+    if (await db.create_transaction(request.telegram_id, amount,
+                                    transaction_type, transaction_data)):
         return {"msg": "Транзакция успешно создана", "ok": True, "status": 201}
     else:
         return {
@@ -100,7 +100,8 @@ async def create_finished_game(request: FinishedGameRequest):
     amount = request.amount
     first_user_id = request.first_user_idw
     second_user_id = request.second_user_id
-    if db.mark_finished_game(game_type, amount, first_user_id, second_user_id):
+    if (await db.mark_finished_game(game_type, amount, first_user_id,
+                                    second_user_id)):
         return {"msg": "Игра успешно завершена", "ok": True, "status": 201}
     else:
         return {"ok": False, "status": 400, "msg": "Ошибка завершения игры"}
@@ -183,7 +184,8 @@ async def roll_dice(request: TurnRequest):
 
 @app.post('api/dice/get_updates', response_class=JSONResponse)
 async def get_dice_updates(request: GetUpdatesRequest):
-    pass
+    if not is_telegram(request.initData):
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
 
 
 @app.post('api/blackjack/create', response_class=JSONResponse)
@@ -210,8 +212,6 @@ async def create_blackjack_room(request: CreateRoomRequest):
         "ok": True,
         "status": 200,
         "room_id": new_room_id,
-        "name": name,
-        "reward": reward
     }
 
 
@@ -264,16 +264,30 @@ async def take_card(request: TurnRequest):
     player_idx: int = current_room["players"].index(request.player_id)
     if current_room["active_player"] != player_idx:
         return {"msg": "Не ваш ход.", "ok": False, "status": 401}
-    card: str = choice(cards_52)
-    current_room["hands"][player_idx].append()
-    if calculate_hand_value(current_room["hands"][player_idx]) > 21:
+    current_room["hands"][player_idx].append(choice(cards_52))
+    player_hand = current_room["hands"][player_idx]
+    if calculate_hand_value(player_hand) > 21:
+        opponent_idx: int = int(not player_idx)
+        current_room[player_idx] += 1
+        if current_room["count"][player_idx] > current_room["count"][
+                opponent_idx]:
+            current_room["count"][opponent_idx] += 1
+            opponent = True
+        else:
+            opponent = False
         return {
             "msg": "У вас перебор.",
             "ok": True,
             "status": 202,
-            "card": card
+            "hand": player_hand,
+            "opponent": opponent
         }
-    return {"msg": "Вы взяли карту.", "ok": True, "status": 200, "card": card}
+    return {
+        "msg": "Вы взяли карту.",
+        "ok": True,
+        "status": 200,
+        "hand": player_hand
+    }
 
 
 @app.get('api/blackjack/get_updates', response_class=JSONResponse)
@@ -300,7 +314,7 @@ async def get_blackjack_updates(request: GetUpdatesRequest):
     self_idx: int = current_room["players"].index(request.player_id)
     opponent_idx: int = int(not self_idx)
     data = {
-        "active_player": current_room["active_player"],
+        "active_player": current_room["active_player"] == self_idx,
         "self": {
             "hands": current_room["hands"][self_idx],
             "count": current_room["count"][self_idx],
@@ -317,6 +331,30 @@ async def get_blackjack_updates(request: GetUpdatesRequest):
         "ok": True,
         "status": 200,
         "data": data
+    }
+
+
+@app.post('/api/blackjack/leave', response_class=JSONResponse)
+async def leave_blackjack_room(request: LeaveRequest):
+    if request.room_id not in blackjack_rooms:
+        return {"msg": "Комната не найдена!", "ok": False, "status": 404}
+    current_room: dict = blackjack_rooms[request.room_id]
+    if request.player_id not in current_room["players"]:
+        return {"msg": "Ты не в игре!", "ok": False, "status": 401}
+    current_room["players"].remove(request.player_id)
+    return {"msg": "Вы вышли из игры!", "ok": True, "status": 200}
+
+
+@app.get('/api/blackjack/get_reward', response_class=JSONResponse)
+async def get_blackjack_reward(request: RoomRequest):
+    if request.room_id not in blackjack_rooms:
+        return {"msg": "Комната не найдена!", "ok": False, "status": 404}
+    current_room: dict = blackjack_rooms[request.room_id]
+    return {
+        "msg": "Награда забрана.",
+        "ok": True,
+        "status": 200,
+        "reward": current_room["reward"]
     }
 
 
