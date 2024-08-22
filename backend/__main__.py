@@ -12,7 +12,7 @@ import backend.database as db
 
 app: FastAPI = FastAPI(debug=True)
 app.mount('/assets',
-          StaticFiles(directory="assets", check_dir=False),
+          StaticFiles(directory="backend/assets", check_dir=False),
           name="assets")
 
 dice_rooms: dict = dict()
@@ -26,7 +26,7 @@ cards_52: List[str] = [
     'k_h', 'k_d', 'k_c', 'k_s'
 ]
 
-templates: Jinja2Templates = Jinja2Templates(directory='templates')
+templates: Jinja2Templates = Jinja2Templates(directory='backend/templates')
 
 
 @app.post('/api/initdata/check', response_class=JSONResponse)
@@ -71,6 +71,70 @@ async def create_player(request: CreateUserRequest):
         return {"msg": "Игрок успешно создан", "ok": True, "status": 201}
     else:
         return {"ok": False, "status": 400, "msg": "Ошибка создания игрока"}
+
+
+@app.get('/api/reward', response_class=JSONResponse)
+async def find_out_reward(request: PlayerRequest):
+    """
+        Get amount of reward for every of referal
+    """
+    if not is_telegram(request.initData):
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    reward = await db.get_referral_reward(request.player_id)
+    return {
+        "msg": "Награда забрана",
+        "ok": True,
+        "status": 200,
+        "reward": reward
+    }
+
+
+@app.post('/api/reward', response_class=JSONResponse)
+async def get_reward(request: PlayerRequest):
+    """
+        Get amount of reward for every of referal
+    """
+    if not is_telegram(request.initData):
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    reward = await db.grab_referral_reward(request.player_id)
+    return {
+        "msg": "Награда забрана",
+        "ok": True,
+        "status": 200,
+        "reward": reward
+    }
+
+
+@app.get('/api/referral', response_class=JSONResponse)
+async def get_referral_count(request: PlayerRequest):
+    """
+        Get count of referrals of certain user
+    """
+    if not is_telegram(request.initData):
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    referral_count = await db.get_referral_count(request.player_id)
+    return {
+        "msg": "Количество рефералов получено",
+        "ok": True,
+        "status": 200,
+        "referral_count": referral_count
+    }
+
+
+@app.get('/api/invite/link', response_class=JSONResponse)
+async def get_invite_link(request: PlayerRequest):
+    """
+        Get invitation link for certain user
+    """
+    if not is_telegram(request.initData):
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    invite_link = await get_invitation_link(request.player_id)
+    return {
+        "msg": "Инвайт ссылка получена",
+        "ok": True,
+        "status": 200,
+        "invite_link": invite_link
+    }
 
 
 @app.post('/api/transaction', response_class=JSONResponse)
@@ -359,33 +423,38 @@ async def get_blackjack_reward(request: RoomRequest):
 
 
 @app.get("/referal", response_class=HTMLResponse)
-async def referal():
-    return templates.TemplateResponse("index.html", {})
+async def referal(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home():
-    return templates.TemplateResponse("index.html", {})
+async def home(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
 
 
 @app.get("/balance", response_class=HTMLResponse)
-async def balance():
-    return templates.TemplateResponse("index.html", {})
+async def balance(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
 
 
 @app.get("/games", response_class=HTMLResponse)
-async def games():
-    return templates.TemplateResponse("index.html", {})
+async def games(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
 
 
 @app.get("/game", response_class=HTMLResponse)
-async def game():
-    return templates.TemplateResponse("index.html", {})
+async def game(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
 
 
 @app.get("/lottery", response_class=HTMLResponse)
-async def lottery():
-    return templates.TemplateResponse("index.html", {})
+async def lottery(request: Request):
+    return templates.TemplateResponse("index.html", context=request)
 
 
 if __name__ == '__main__':

@@ -407,8 +407,9 @@ export default function Roulette() {
   };
 
   const handleChipChange = (event: React.MouseEvent<HTMLLIElement>) => {
-    const chipName = (event.target as HTMLElement).closest("[data-name]")
-      ?.dataset.name as string;
+    const chipName = (event.target as HTMLElement).closest<HTMLElement>(
+      "[data-name]"
+    )?.dataset.name as string;
 
     setActiveChip(chipName);
   };

@@ -6,9 +6,9 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 def get_keyboard(element: str, page: int, count: int,
                  data: List[int]) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
-    for datum in data:
+    for idx, datum in enumerate(data, start=1):
         keyboard.add(
-            InlineKeyboardButton(text=datum,
+            InlineKeyboardButton(text=str(idx),
                                  callback_data=f"{element[:-1]}_{datum}"))
     keyboard.add(
         InlineKeyboardButton(

@@ -1,5 +1,4 @@
-#from sqlalchemy.future import select
-from typing import Tuple, List
+from typing import List
 from sqlalchemy import update, delete, select
 import asyncio
 from backend.models import *
@@ -47,7 +46,7 @@ async def select_users():
                   sep=", ")
 
 
-async def create_user(telegram_id: str, username: str,
+async def create_user(telegram_id: str | int, username: str,
                       wallet_address: str) -> bool:
     """
     Creates a new user in the database.
@@ -73,7 +72,7 @@ async def create_user(telegram_id: str, username: str,
             return False  # Error creating user
 
 
-async def get_user(telegram_id: str) -> Users:
+async def get_user(telegram_id: str | int) -> Users:
     """
     Retrieves a user from the database based on their Telegram ID.
 
@@ -92,6 +91,27 @@ async def get_user(telegram_id: str) -> Users:
         result = await session.execute(query)
         curr = result.scalars()
         return curr.first()
+
+
+async def clear_user(telegram_id: str | int) -> bool:
+    """
+    Deletes a user from the database based on their Telegram ID.
+
+    Args:
+        telegram_id (str): The Telegram ID of the user to delete.
+
+    Returns:
+        bool: True if the user was found and deleted successfully, False otherwise.
+
+    Example:
+        >>> await clear_user("1234567890")
+        True
+    """
+    async with new_session() as session:
+        async with session.begin():
+            statement = delete(Users).where(Users.telegram_id == telegram_id)
+            result = await session.execute(statement)
+            return result.rowcount > 0
 
 
 async def add_user_money(telegram_id: str, money: int) -> bool:
@@ -306,7 +326,7 @@ async def get_count_users() -> int:
         Get count of all users
     """
     async with new_session() as session:
-        query = select(func.count(Users.user_id))
+        query = select(db.func.count()).select_from(Users.user_id)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -329,23 +349,26 @@ async def get_users(page: int = 1) -> List[Users]:
         return users
 
 
-async def get_balances(page: int = 1) -> List[tuple[int, str, float]]:
-    """
-        Get list of balances
-
-        Args:
-            page (int): Page number
-
-        Returns:
-            List[tuple[int, str, float]]: List of balances
-                tuple[int, str, float]: (user_id, username, balance)
-    """
+async def edit_money_balance(telegram_id: str | int,
+                             money_balance: float | int):
     async with new_session() as session:
-        query = select(Users.telegram_id, Users.dollar_balance,
-                       Users.money_balance).offset((page - 1) * 10).limit(10)
+        query = select(Users).where(Users.telegram_id == telegram_id)
         result = await session.execute(query)
-        balances = result.all()
-        return balances
+        user = result.scalar()
+        user.money_balance = money_balance
+        await session.commit()
+        return True
+
+
+async def edit_dollar_balance(telegram_id: str | int,
+                              dollar_balance: float | int):
+    async with new_session() as session:
+        query = select(Users).where(Users.telegram_id == telegram_id)
+        result = await session.execute(query)
+        user = result.scalar()
+        user.dollar_balance = dollar_balance
+        await session.commit()
+        return True
 
 
 async def get_count_transactions() -> int:
@@ -353,8 +376,8 @@ async def get_count_transactions() -> int:
         Get count of all transactions
     """
     async with new_session() as session:
-        query = select(db.func.count(Transactions.transaction_id))
-        #TODO: REMADE
+        query = select(db.func.count()).select_from(
+            Transactions.transaction_id)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -371,11 +394,30 @@ async def get_transactions(page: int = 1) -> List[Transactions]:
             List[Transactions]: List of transactions
     """
     async with new_session() as session:
-        #TODO: REMADE
         query = select(Transactions).offset((page - 1) * 10).limit(10)
         result = await session.execute(query)
         transactions = result.scalars().all()
         return transactions
+
+
+async def get_transaction(transaction_id: int):
+    async with new_session() as session:
+        query = select(Transactions).where(
+            Transactions.transaction_id == transaction_id)
+        result = await session.execute(query)
+        transaction = result.scalars().first()
+        return transaction
+
+
+async def confirm_transaction(transaction_id: int):
+    async with new_session() as session:
+        query = select(Transactions).where(
+            Transactions.transaction_id == transaction_id)
+        result = await session.execute(query)
+        transaction = result.scalars().first()
+        transaction.confirmed_at = datetime.now(UTC)
+        await session.commit()
+        return True
 
 
 async def get_count_referrals() -> int:
@@ -383,8 +425,7 @@ async def get_count_referrals() -> int:
         Get count of all referalls
     """
     async with new_session() as session:
-        #TODO: REMADE
-        query = select(func.count(Referrals.referral_id))
+        query = select(db.func.count()).select_from(Referrals.referral_id)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -403,8 +444,8 @@ async def get_referral(id) -> Referrals:
     async with new_session() as session:
         query = select(Referrals).where(Referrals.referrer_id == id)
         result = await session.execute(query)
-        referrals = result.scalars().first()
-        return referrals
+        referral = result.scalars().first()
+        return referral
 
 
 async def get_referrals(page: int = 1) -> List[Referrals]:
@@ -425,7 +466,72 @@ async def get_referrals(page: int = 1) -> List[Referrals]:
         return referrals
 
 
+async def get_sum_lottery_transactions() -> float:
+    async with new_session() as session:
+        query = select(db.func.sum(
+            LotteryTransactions.amount)).select_from(LotteryTransactions)
+        result = await session.execute(query)
+        sum = result.scalar()
+        return sum
+
+
+async def get_count_lottery_transactions() -> int:
+    async with new_session() as session:
+        query = select(db.func.count()).select_from(LotteryTransactions)
+        result = await session.execute(query)
+        count = result.scalar()
+        return count
+
+
+async def get_lottery_transactions(page: int = 1) -> List[LotteryTransactions]:
+    """
+        Get list of lottery transactions
+
+        Args:
+            page (int): Page number
+
+        Returns:
+            List[LotteryTransactions]: List of lottery transactions
+    """
+    async with new_session() as session:
+        query = select(LotteryTransactions).offset((page - 1) * 10).limit(10)
+        result = await session.execute(query)
+        transactions = result.scalars().all()
+        return transactions
+
+
+async def check_admin(telegram_id: str | int) -> bool:
+    async with new_session() as session:
+        query = select(Users).where(Users.telegram_id == telegram_id).where(
+            Users.admin == True)
+        result = await session.execute(query)
+        user = result.scalars().first()
+        return bool(user)
+
+
+async def delete_referral(referral_id: int | str):
+    async with new_session() as session:
+        query = select(Referrals).where(Referrals.referral_id == referral_id)
+        result = await session.execute(query)
+        referral = result.scalars().first()
+        await session.delete(referral)
+        await session.commit()
+        return True
+
+
 print(asyncio.run(create_user("2134", "ohmygod", "212wwdaafas")))
-print(asyncio.run(create_transaction(1, 500, 1, "Прикол")))
-asyncio.run(select_transactions())
-asyncio.run(select_users())
+
+
+#print(asyncio.run(create_transaction(1, 500, 1, "Прикол")))
+
+#asyncio.run(select_transactions())
+async def catch_sum():
+    async with new_session() as session:
+        query = select(db.func.sum(
+            Transactions.amount)).select_from(Transactions)
+        result = await session.execute(query)
+        sum = result.scalar()
+        print(sum)
+
+
+asyncio.run(catch_sum())

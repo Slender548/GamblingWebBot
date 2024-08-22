@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
-import type { FC } from 'react';
+import { useContext } from "react";
+import type { FC } from "react";
 
-import { Chip } from '../Chip';
-import { RouletteTableContext } from '../../../context';
+import { Chip } from "../Chip";
+import { RouletteTableContext } from "../../../context";
 
-import config from '../../../config/table.json';
+import config from "../../../config/table.json";
 import {
   shouldRenderBottomCatcher,
   shouldRenderChip,
@@ -15,8 +15,8 @@ import {
   shouldRenderTopRightDoubleStreetCatcher,
   shouldRenderTopStreetCatcher,
   findChipIcon,
-} from '../../../helpers';
-import { ACTION_TYPES } from '../../../constants';
+} from "../../../helpers";
+import { ACTION_TYPES } from "../../../constants";
 
 export const NumberBets: FC = () => {
   const { onBetCatcherHover, bets } = useContext(RouletteTableContext);
@@ -29,7 +29,7 @@ export const NumberBets: FC = () => {
           data-action={ACTION_TYPES.STRAIGHT_UP}
           data-bet={`${number}`}
           className={`${
-            config.RED.includes(number) ? 'red-item' : 'black-item'
+            config.RED.includes(number) ? "red-item" : "black-item"
           }`}
         >
           {/* start chip */}
@@ -46,13 +46,13 @@ export const NumberBets: FC = () => {
               />
               {shouldRenderChip(
                 `${number}-${number + 1}-${number + 3}-${number + 4}`,
-                bets,
+                bets
               ) === true && (
                 <Chip
                   position="right-top"
                   icon={findChipIcon(
                     `${number}-${number + 1}-${number + 3}-${number + 4}`,
-                    bets,
+                    bets
                   )}
                 />
               )}
@@ -75,7 +75,7 @@ export const NumberBets: FC = () => {
                 `${number}-${number - 1}-${number - 2}-${number + 3}-${
                   number + 2
                 }-${number + 1}`,
-                bets,
+                bets
               ) === true && (
                 <Chip
                   position="right-top"
@@ -83,7 +83,7 @@ export const NumberBets: FC = () => {
                     `${number}-${number - 1}-${number - 2}-${number + 3}-${
                       number + 2
                     }-${number + 1}`,
-                    bets,
+                    bets
                   )}
                 />
               )}
@@ -102,13 +102,13 @@ export const NumberBets: FC = () => {
               />
               {shouldRenderChip(
                 `${number}-${number - 1}-${number - 2}`,
-                bets,
+                bets
               ) === true && (
                 <Chip
                   position="center-top"
                   icon={findChipIcon(
                     `${number}-${number - 1}-${number - 2}`,
-                    bets,
+                    bets
                   )}
                 />
               )}
@@ -122,18 +122,18 @@ export const NumberBets: FC = () => {
                 onMouseEnter={onBetCatcherHover}
                 onMouseLeave={onBetCatcherHover}
                 data-action={ACTION_TYPES.STREET}
-                data-highlight={`${number === 1 ? '0-1-2' : '00-2-3'}`}
+                data-highlight={`${number === 1 ? "0-1-2" : "00-2-3"}`}
                 style={{ zIndex: 12 }}
               />
               {shouldRenderChip(
-                `${number === 1 ? '0-1-2' : '00-2-3'}`,
-                bets,
+                `${number === 1 ? "0-1-2" : "00-2-3"}`,
+                bets
               ) === true && (
                 <Chip
                   position="left-top"
                   icon={findChipIcon(
-                    `${number === 1 ? '0-1-2' : '00-2-3'}`,
-                    bets,
+                    `${number === 1 ? "0-1-2" : "00-2-3"}`,
+                    bets
                   )}
                 />
               )}
@@ -188,13 +188,13 @@ export const NumberBets: FC = () => {
               />
               {shouldRenderChip(
                 `${number}-${number + 1}-${number + 2}`,
-                bets,
+                bets
               ) === true && (
                 <Chip
                   position="center-bottom"
                   icon={findChipIcon(
                     `${number}-${number + 1}-${number + 2}`,
-                    bets,
+                    bets
                   )}
                 />
               )}
@@ -215,7 +215,7 @@ export const NumberBets: FC = () => {
                 `${number}-${number + 1}-${number + 2}-${number + 3}-${
                   number + 4
                 }-${number + 5}`,
-                bets,
+                bets
               ) === true && (
                 <Chip
                   position="right-bottom"
@@ -223,7 +223,7 @@ export const NumberBets: FC = () => {
                     `${number}-${number + 1}-${number + 2}-${number + 3}-${
                       number + 4
                     }-${number + 5}`,
-                    bets,
+                    bets
                   )}
                 />
               )}

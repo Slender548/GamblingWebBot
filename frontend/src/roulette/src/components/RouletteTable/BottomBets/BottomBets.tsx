@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
-import type { FC } from 'react';
+import { useContext } from "react";
+import type { FC } from "react";
 
-import { Chip } from '../Chip';
-import { RouletteTableContext } from '../../../context';
+import { Chip } from "../Chip";
+import { RouletteTableContext } from "../../../context";
 
-import { shouldRenderChip, findChipIcon } from '../../../helpers';
-import { ACTION_TYPES } from '../../../constants';
+import { shouldRenderChip, findChipIcon } from "../../../helpers";
+import { ACTION_TYPES } from "../../../constants";
 
 export const BottomBets: FC = () => {
   const { onBetCatcherHover, bets } = useContext(RouletteTableContext);
@@ -16,15 +16,15 @@ export const BottomBets: FC = () => {
         className="outside-section"
         onMouseEnter={onBetCatcherHover}
         onMouseLeave={onBetCatcherHover}
-        data-action={ACTION_TYPES['1_TO_18']}
-        data-bet={ACTION_TYPES['1_TO_18']}
-        data-highlight={ACTION_TYPES['1_TO_18']}
+        data-action={ACTION_TYPES["1_TO_18"]}
+        data-bet={ACTION_TYPES["1_TO_18"]}
+        data-highlight={ACTION_TYPES["1_TO_18"]}
       >
         <div>1-18</div>
-        {shouldRenderChip(ACTION_TYPES['1_TO_18'], bets) && (
+        {shouldRenderChip(ACTION_TYPES["1_TO_18"], bets) && (
           <Chip
             position="center"
-            icon={findChipIcon(ACTION_TYPES['1_TO_18'], bets)}
+            icon={findChipIcon(ACTION_TYPES["1_TO_18"], bets)}
           />
         )}
       </div>
@@ -97,15 +97,15 @@ export const BottomBets: FC = () => {
         className="outside-section"
         onMouseEnter={onBetCatcherHover}
         onMouseLeave={onBetCatcherHover}
-        data-action={ACTION_TYPES['19_TO_36']}
-        data-bet={ACTION_TYPES['19_TO_36']}
-        data-highlight={ACTION_TYPES['19_TO_36']}
+        data-action={ACTION_TYPES["19_TO_36"]}
+        data-bet={ACTION_TYPES["19_TO_36"]}
+        data-highlight={ACTION_TYPES["19_TO_36"]}
       >
         <div>19-36</div>
-        {shouldRenderChip(ACTION_TYPES['19_TO_36'], bets) && (
+        {shouldRenderChip(ACTION_TYPES["19_TO_36"], bets) && (
           <Chip
             position="center"
-            icon={findChipIcon(ACTION_TYPES['19_TO_36'], bets)}
+            icon={findChipIcon(ACTION_TYPES["19_TO_36"], bets)}
           />
         )}
       </div>

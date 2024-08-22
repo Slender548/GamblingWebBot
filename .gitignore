@@ -2,3 +2,7 @@
 /ReactApp
 __pycache__
 tasks.db
+/KickTheDoll
+test.*
+date.json
+_test.*

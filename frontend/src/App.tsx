@@ -40,10 +40,7 @@ function App() {
 
   return (
     <>
-      <TonConnectUIProvider
-        className="cell"
-        manifestUrl="http://localhost:5173/tonconnect-manifest.json"
-      >
+      <TonConnectUIProvider manifestUrl="http://localhost:5173/tonconnect-manifest.json">
         <Routes>
           <Route path="/referal" element={<Referal />} />
           <Route path="/balance" element={<Balance />} />

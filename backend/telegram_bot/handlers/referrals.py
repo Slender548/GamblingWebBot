@@ -24,9 +24,9 @@ async def referrals(callback: CallbackQuery, state: FSMContext, bot: Bot):
     end = min(start + 9, count_referrals)
     answer = f"Рефери {start}-{end} из {count_referrals}\n\n"
     data = list()
-    for referral in referrals:
+    for idx, referral in enumerate(referrals, start=1):
         data.append(referral.referral_id)
-        answer += f"[{referral.referrer_id}-{referral.referred_id}]: {referral.bonus}\n"
+        answer += f"{idx}.[{referral.referrer_id}-{referral.referred_id}]: Бонус:{referral.bonus}\n"
     answer += "\n(если вам нужна конкретная страница, введите номер реферала на этой странице)"
     await state.set_state(States.Referrals)
     await callback.message.edit_text(answer,
@@ -49,9 +49,9 @@ async def search_referrals(message: Message, state: FSMContext):
     end = min(start + 9, count_referrals)
     answer = f"Рефералы {start}-{end} из {count_referrals}\n\n"
     data = list()
-    for referral in referrals:
+    for idx, referral in enumerate(referrals, start=1):
         data.append(referral.referral_id)
-        answer += f"[{referral.referrer_id}-{referral.referred_id}]: {referral.bonus}\n"
+        answer += f"{idx}.[{referral.referrer_id}-{referral.referred_id}]: Бонус:{referral.bonus}\n"
     answer += "\n(если вам нужна конкретная страница, введите номер реферала на этой странице)"
     await state.set_state(States.Referrals)
     await message.answer(answer,

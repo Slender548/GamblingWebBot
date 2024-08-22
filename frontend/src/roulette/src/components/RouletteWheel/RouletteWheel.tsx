@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import type { FC } from 'react';
+import { useEffect, useState, useRef } from "react";
+import type { FC } from "react";
 
-import config from '../../config/table.json';
-import { getWheelNumbers } from '../../helpers';
-import { classNames } from '../../libs';
+import config from "../../config/table.json";
+import { getWheelNumbers } from "../../helpers";
+import { classNames } from "../../libs";
 
-import './RouletteWheel.css';
+import "./RouletteWheel.css";
 
 const availableWinningBets = [
-  ...config['1_TO_18'],
-  ...config['19_TO_36'],
-  ...['-1', '0', '00'],
+  ...config["1_TO_18"],
+  ...config["19_TO_36"],
+  ...["-1", "0", "00"],
 ].map((bet) => `${bet}`);
 
 export interface IRouletteWheelProps {
@@ -39,24 +39,24 @@ export const RouletteWheel: FC<IRouletteWheelProps> = ({
   useEffect(() => {
     const currentInnerRef = innerRef.current;
 
-    if (winningBet === '-1' || currentInnerRef === null || start === false) {
+    if (winningBet === "-1" || currentInnerRef === null || start === false) {
       return;
     }
 
     if (addRest === true) {
-      currentInnerRef.classList.remove('rest');
+      currentInnerRef.classList.remove("rest");
     }
 
-    currentInnerRef.removeAttribute('data-spintoindex');
+    currentInnerRef.removeAttribute("data-spintoindex");
 
     const betIndex = wheelNumbers.indexOf(winningBet);
 
     setTimeout(() => {
-      currentInnerRef.setAttribute('data-spintoindex', `${betIndex}`);
+      currentInnerRef.setAttribute("data-spintoindex", `${betIndex}`);
 
       setTimeout(() => {
         if (addRest === true) {
-          currentInnerRef.classList.add('rest');
+          currentInnerRef.classList.add("rest");
         }
 
         onSpinningEnd?.();
@@ -69,8 +69,8 @@ export const RouletteWheel: FC<IRouletteWheelProps> = ({
   return (
     <div className="roulette-wheel-container">
       <div
-        className={classNames('roulette-wheel-plate', {
-          'with-animation': withAnimation,
+        className={classNames("roulette-wheel-plate", {
+          "with-animation": withAnimation,
         })}
       >
         <ul className="roulette-wheel-inner" ref={innerRef}>

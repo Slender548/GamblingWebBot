@@ -11,6 +11,8 @@ const CrashGame: React.FC = () => {
   const [reward, setReward] = useState<number>(100);
   const [rocketStartTime, setRocketStartTime] = useState<number | null>(null);
 
+  crashStatus;
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 

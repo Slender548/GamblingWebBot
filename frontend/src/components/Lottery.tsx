@@ -1,5 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./Lottery.css";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
 const Lottery: React.FC = () => {
   const segments = [
@@ -14,12 +15,70 @@ const Lottery: React.FC = () => {
     "10000 TON",
     "20000 TON",
     "50000 TON",
-    // 10 fiat rewards
   ];
   const [currentDeg, setCurrentDeg] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const pointerRef = useRef<HTMLDivElement>(null);
   const lightsRef = useRef<HTMLDivElement[]>([]);
+  const { initDataRaw, initData } = retrieveLaunchParams();
+  const [currentLottery, setCurrentLottery] = useState<number | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
+  const [remainStringTime, setRemainStringTime] = useState<string>("");
+
+  useEffect(() => {
+    const fetchData = async (): Promise<void> => {
+      const response = await fetch("/api/lottery", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          initData: initDataRaw,
+        }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setCurrentLottery(data.lottery);
+        setEndTime(data.time);
+      }
+    };
+    fetchData();
+  }, [initData?.user?.id, initDataRaw]);
+
+  if (endTime) {
+    const x = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = endTime?.getTime() - now;
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      let out: string = "";
+      if (days) {
+        out += days + "д ";
+      }
+      if (hours) {
+        out += hours + "ч ";
+      }
+      if (minutes) {
+        out += minutes + "м ";
+      }
+      if (seconds) {
+        out += seconds + "с";
+      }
+      if (distance > 0) {
+        setRemainStringTime(out);
+      } else {
+        clearInterval(x);
+        setRemainStringTime("");
+      }
+    }, 1000);
+  }
+  const makeDeposit = () => {};
+
+  const showTopDeposits = () => {};
 
   const spin = () => {
     if (isSpinning) return;
@@ -49,12 +108,42 @@ const Lottery: React.FC = () => {
           <b className="page-title-cell-title">Лотерея</b>
         </div>
         <div className="page-title-cell">
-          <b className="page-title-cell-title">Общий оборот:</b> 1234$
+          {<b className="page-title-cell-title">
+            Общий оборот: {currentLottery}
+          </b> ? (
+            currentLottery
+          ) : (
+            <b className="page-title-cell-title">Лотерея не выставлена</b>
+          )}
         </div>
+        {<div className="page-title-cell">
+          {<>
+            <b className="page-title-cell-title">Осталось:</b>{" "}
+            {remainStringTime}
+          </> ? (
+            remainStringTime
+          ) : (
+            <b className="page-title-cell-title">Лотерея закончилась</b>
+          )}
+        </div> ? (
+          endTime === null
+        ) : null}
       </div>
       <div className="page-other">
-        <div className="cell btn-money">💰Сделать депозит💰</div>
-        <div className="cell">Топ депозитов</div>
+        <button
+          className="cell btn-money"
+          disabled={endTime === null || remainStringTime === ""}
+          onClick={makeDeposit}
+        >
+          💰Сделать депозит💰
+        </button>
+        <button
+          className="cell"
+          disabled={endTime === null}
+          onClick={showTopDeposits}
+        >
+          Топ депозитов
+        </button>
         <div className="wrapper">
           {Array.from({ length: 10 }, (_, i) => (
             <div

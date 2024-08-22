@@ -73,11 +73,13 @@ async def history(callback: CallbackQuery, state: FSMContext, bot: Bot):
     transactions = await db.get_lottery_transactions(page)
     end = min(start + 9, count_transactions)
     answer = f"Транзакции {start}-{end} из {count_transactions}\n\n"
-    for transaction in transactions:
-        answer += f"{"Подтверждено" if transaction.confirmed_at else "Не подтверждено"}.[{transaction.created_at}].Пользователь ID:{transaction.telegram_id}.{transaction.amount}\n"
+    data = list()
+    for idx, transaction in enumerate(transactions, start=1):
+        data.append(transaction.id)
+        answer += f"{idx}.{"Подтверждено" if transaction.confirmed_at else "Не подтверждено"}.[{transaction.created_at}].Пользователь ID:{transaction.telegram_id}.{transaction.amount}\n"
     answer += "\n(если вам нужна конкретная страница, введите номер транзакции на этой странице)"
     await state.set_state(States.LotteryHistory)
-    await callback.message.edit_text(answer, reply_markup=get_nav_keyboard("Lottery", page, count_transactions))
+    await callback.message.edit_text(answer, reply_markup=get_nav_keyboard("Lottery", page, count_transactions, data))
 
 
 @router.message(States.LotteryHistory)
@@ -96,9 +98,11 @@ async def search_history(message: Message, state: FSMContext):
     start = page * batch_size + 1
     end = min(start + 9, count_transactions)
     answer = f"Транзакции {start}-{end} из {count_transactions}\n\n"
-    for transaction in transactions:
-        answer += f"{"Подтверждено" if transaction.confirmed_at else "Не подтверждено"}.[{transaction.created_at}].Пользователь ID:{transaction.telegram_id}.{transaction.amount}\n"
+    data = list()
+    for idx, transaction in enumerate(transactions, start=1):
+        data.append(transaction.id)
+        answer += f"{idx}.{"Подтверждено" if transaction.confirmed_at else "Не подтверждено"}.[{transaction.created_at}].Пользователь ID:{transaction.telegram_id}.{transaction.amount}\n"
     answer += "\n(если вам нужна конкретная страница, введите номер транзакции на этой странице)"
     await state.set_state(States.LotteryHistory)
-    await message.answer(answer, reply_markup=get_nav_keyboard("Lottery", page, count_transactions))
+    await message.answer(answer, reply_markup=get_nav_keyboard("Lottery", page, count_transactions, data))
 

@@ -17,5 +17,6 @@ def sure_keyboard(date: str) -> InlineKeyboardMarkup:
     keyboard.add(
         InlineKeyboardButton(text="Да", callback_data=f"TechYes_{date}"),
         InlineKeyboardButton(text="Нет", callback_data="TechWorks"),
+        InlineKeyboardButton(text="🏠", callback_data="Main"),
     )
     return keyboard.as_markup()

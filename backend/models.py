@@ -29,6 +29,7 @@ class Users(Model):
     wallet_address: Mapped[str] = mapped_column(String(128),
                                                 nullable=False,
                                                 unique=True)
+    admin: Mapped[bool] = mapped_column(nullable=True, default=None)
     dollar_balance: Mapped[float] = mapped_column(default=0)
     money_balance: Mapped[float] = mapped_column(default=0)
     total_transactions: Mapped[float] = mapped_column(default=0)

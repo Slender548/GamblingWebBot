@@ -10,7 +10,7 @@ function Game() {
         pck={pckFile}
         script={scriptFile}
         resize={false}
-        params={"32"}
+        params={[123, "24"]}
       />
     </>
   );

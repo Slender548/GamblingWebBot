@@ -1,19 +1,19 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import type { FC, MouseEvent } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from "react";
+import type { FC, MouseEvent } from "react";
 
-import { ZeroBets } from './ZeroBets';
-import { NumberBets } from './NumberBets';
-import { Columns } from './Columns';
-import { Dozens } from './Dozens';
-import { BottomBets } from './BottomBets';
+import { ZeroBets } from "./ZeroBets";
+import { NumberBets } from "./NumberBets";
+import { Columns } from "./Columns";
+import { Dozens } from "./Dozens";
+import { BottomBets } from "./BottomBets";
 
-import { RouletteTableContext } from '../../context';
-import { ACTION_TYPES } from '../../constants';
-import config from '../../config/table.json';
-import { hasOwn } from '../../utills';
-import { classNames } from '../../libs';
+import { RouletteTableContext } from "../../context";
+import { ACTION_TYPES } from "../../constants";
+import config from "../../config/table.json";
+import { hasOwn } from "../../utills";
+import { classNames } from "../../libs";
 
-import './RouletteTable.css';
+import "./RouletteTable.css";
 
 export interface IOnBetParams {
   bet: keyof typeof ACTION_TYPES;
@@ -45,13 +45,13 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
 
     const listener = (event: Event) => {
       const highlightElement = (event.target as HTMLDivElement)?.closest(
-        '[data-highlight]',
+        "[data-highlight]"
       );
       const highlightData = (highlightElement as HTMLDivElement)?.dataset
         ?.highlight;
 
       const betElement = (event.target as HTMLDivElement)?.closest(
-        '[data-bet]',
+        "[data-bet]"
       );
       const betData = (betElement as HTMLDivElement)?.dataset?.bet;
 
@@ -59,22 +59,22 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
         ?.dataset?.action;
 
       if (
-        (highlightData === undefined || highlightData === '') &&
-        (betData === undefined || betData === '')
+        (highlightData === undefined || highlightData === "") &&
+        (betData === undefined || betData === "")
       ) {
-        console.error('No data in [data-bet] or [data-highlight]');
+        console.error("No data in [data-bet] or [data-highlight]");
         return;
       }
 
-      if (action === undefined || action === '') {
-        console.error('Action is undefined');
+      if (action === undefined || action === "") {
+        console.error("Action is undefined");
         return;
       }
 
       const isActionSupported = Object.keys(ACTION_TYPES).includes(action);
 
       if (isActionSupported === false) {
-        console.error('Unsupported action', action);
+        console.error("Unsupported action", action);
         return;
       }
 
@@ -83,17 +83,17 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
       const payloadData = (highlightData ?? betData) as string;
 
       const getPayload = () => {
-        const firstId = payloadData.split('-')[0];
+        const firstId = payloadData.split("-")[0];
 
         const isPayloadInConfig = hasOwn(config, firstId);
 
         if (isPayloadInConfig === true) {
           return config[firstId as keyof typeof config].map(
-            (item) => `${item}`,
+            (item) => `${item}`
           );
         }
 
-        return payloadData.split('-').map((item) => item);
+        return payloadData.split("-").map((item) => item);
       };
 
       const payload = getPayload();
@@ -105,12 +105,12 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
       });
     };
 
-    tableRef.current.addEventListener('click', listener);
+    tableRef.current.addEventListener("click", listener);
 
     const tableRefCurrent = tableRef.current;
 
     return () => {
-      tableRefCurrent?.removeEventListener('click', listener);
+      tableRefCurrent?.removeEventListener("click", listener);
     };
   }, [onBet]);
 
@@ -119,7 +119,7 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
       return;
     }
 
-    const hoverClass = 'item-hover';
+    const hoverClass = "item-hover";
 
     const element = tableRef.current.querySelector(`[data-bet="${betId}"]`);
 
@@ -130,7 +130,7 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
     (event: MouseEvent<HTMLDivElement>) => {
       const highlightData = (event.currentTarget as HTMLDivElement).dataset
         .highlight;
-      const toHighlight = highlightData?.split('-');
+      const toHighlight = highlightData?.split("-");
 
       const firstHighlight = toHighlight?.[0];
 
@@ -144,12 +144,12 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
         doHighlight(firstHighlight);
 
         if (config[firstHighlight as keyof typeof config] === undefined) {
-          console.error('Config does not contain the key', firstHighlight);
+          console.error("Config does not contain the key", firstHighlight);
           return;
         }
 
         config[firstHighlight as keyof typeof config].forEach((bet) =>
-          doHighlight(`${bet}`),
+          doHighlight(`${bet}`)
         );
 
         return;
@@ -159,18 +159,18 @@ export const RouletteTable: FC<IRouletteTableProps> = ({
         doHighlight(element);
       });
     },
-    [],
+    []
   );
 
   const contextValue = useMemo(
     () => ({ bets, onBetCatcherHover: handleBetCatcherHover }),
-    [bets, handleBetCatcherHover],
+    [bets, handleBetCatcherHover]
   );
 
   return (
     <RouletteTableContext.Provider value={contextValue}>
       <div
-        className={classNames('roulette-table-container', { debug: isDebug })}
+        className={classNames("roulette-table-container", { debug: isDebug })}
         ref={tableRef}
       >
         <section className="roulette-table-container-first">

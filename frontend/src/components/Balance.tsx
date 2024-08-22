@@ -23,7 +23,7 @@ export default function Balance(): JSX.Element {
   const [historyPopup, setHistoryPopup] = useState<boolean>(false);
   const [dollarBalance, setDollarBalance] = useState<number>(0);
   const [moneyBalance, setMoneyBalance] = useState<number>(0);
-  const [transactions, setTransactions] = useState<Array<Transaction>>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const withdrawAmount = useRef<HTMLInputElement | null>(null);
   const depositAmount = useRef<HTMLInputElement | null>(null);
   useEffect(() => {

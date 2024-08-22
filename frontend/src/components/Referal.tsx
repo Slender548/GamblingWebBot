@@ -46,7 +46,7 @@ export default function Referal(): JSX.Element {
      * @return {Promise<void>} A promise that resolves when the referal data is fetched and updated.
      */
     const fetchReferal = async (): Promise<void> => {
-      const response = await fetch("/api/referal", {
+      const response = await fetch("/api/referral", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export default function Referal(): JSX.Element {
       });
       const data = await response.json();
       if (data.ok) {
-        setReferal(data.referal);
+        setReferal(data.referal_count);
       }
     };
     fetchReferal();
@@ -70,7 +70,7 @@ export default function Referal(): JSX.Element {
      * @return {Promise<void>} A promise that resolves when the link data is fetched and updated.
      */
     const fetchLink = async () => {
-      const response = await fetch("/api/link", {
+      const response = await fetch("/api/invite/link", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export default function Referal(): JSX.Element {
       });
       const data = await response.json();
       if (data.ok) {
-        setLink(data.link);
+        setLink(data.invite_link);
       }
     };
     fetchLink();
@@ -141,7 +141,7 @@ export default function Referal(): JSX.Element {
       if ((await response.json()).ok) {
         const intervalId = setInterval(() => {
           setReward((reward) =>
-            reward > 0 ? reward - 1 : clearInterval(intervalId) || 0
+            reward > 0 ? reward - 1 : (clearInterval(intervalId), 0)
           );
         }, 10);
       }
