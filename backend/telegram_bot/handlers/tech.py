@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from telegram_bot.keyboards import get_tech_keyboard, get_tech_sure_keyboard, get_home_keyboard
 from telegram_bot.states import States
 
-from backend.tech import start_works
+from tech import start_works
 
 from datetime import datetime, UTC
 

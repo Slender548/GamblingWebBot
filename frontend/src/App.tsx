@@ -13,6 +13,7 @@ import Crash from "./components/Crash.tsx";
 import Roulette from "./components/Roulette.tsx";
 import BlackjackPage from "./components/Blackjack_page.tsx";
 import BlackjackBot from "./components/Blackjack_bot.tsx";
+import ServerError from "./fakes/ServerError.tsx";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import "./App.css";
@@ -30,17 +31,25 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (!data.ok) {
-          return <h1>Run it in telegram mini apps.</h1>;
+          return (
+            <>
+              <ServerError />
+            </>
+          );
         }
       })
       .catch(() => {
-        return <h1>Run it in telegram mini apps.</h1>;
+        return (
+          <>
+            <ServerError />
+          </>
+        );
       });
   });
 
   return (
     <>
-      <TonConnectUIProvider manifestUrl="http://localhost:5173/tonconnect-manifest.json">
+      <TonConnectUIProvider manifestUrl="http://localhost:8001/tonconnect-manifest.json">
         <Routes>
           <Route path="/referal" element={<Referal />} />
           <Route path="/balance" element={<Balance />} />

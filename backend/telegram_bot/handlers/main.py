@@ -1,10 +1,9 @@
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardButton, CallbackQuery
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import Message, CallbackQuery
 from telegram_bot.keyboards import get_main_keyboard
-import backend.database as db
-from backend.utils import RegistrationPredictor
+from database import db
+from utils import RegistrationPredictor
 from base64 import b64decode
 
 router = Router(name=__name__)

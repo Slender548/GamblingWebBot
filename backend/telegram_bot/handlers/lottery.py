@@ -1,10 +1,10 @@
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
-import backend.database as db
+from database import db
 from telegram_bot.states import States
 from telegram_bot.keyboards import get_nav_keyboard, get_lottery_keyboard, get_create_lottery_keyboard, get_manage_lottery_keyboard, get_home_keyboard, get_sure_close_keyboard
-from backend.lottery import get_current_lottery, create_lottery, close_lottery, change_date_lottery
+from lottery import get_current_lottery, create_lottery, close_lottery, change_date_lottery
 
 router = Router(name=__name__)
 

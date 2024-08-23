@@ -1,9 +1,9 @@
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
-import backend.database as db
-from backend.telegram_bot.states import States
-from telegram_bot.keyboards import get_nav_keyboard, get_sure_clear_keyboard, get_user_keyboard, get_user_dollar_keyboard, get_user_money_keyboard, get_home_keyboard
+from database import db
+from ..states import States
+from ..keyboards import get_nav_keyboard, get_sure_clear_keyboard, get_user_keyboard, get_user_dollar_keyboard, get_user_money_keyboard, get_home_keyboard
 
 router = Router(name=__name__)
 

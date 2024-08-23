@@ -29,12 +29,4 @@ def get_routers() -> Router:
     return router
 
 
-__all__ = [
-    "balance_router",
-    "lottery_router",
-    "referrals_router",
-    "history_router",
-    "tech_router",
-    "users_router",
-    "main_router",
-]
+__all__ = ["get_routers"]

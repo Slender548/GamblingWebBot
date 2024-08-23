@@ -2,7 +2,7 @@ from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from telegram_bot.states import States
-import backend.database as db
+from database import db
 from telegram_bot.keyboards import get_nav_keyboard, get_ref_keyboard, get_home_keyboard, get_ref_sure_keyboard
 
 batch_size = 10
