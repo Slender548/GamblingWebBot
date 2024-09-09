@@ -7,7 +7,7 @@ from telegram_bot.states import States
 
 from tech import start_works
 
-from datetime import datetime, UTC
+from datetime import datetime
 
 router = Router(name=__name__)
 
@@ -43,7 +43,7 @@ async def tech_works_check(message: Message, state: FSMContext):
         day, month, year = map(int, date)
         hour, minute, second = map(int, time)
         date_time = datetime(year, month, day, hour, minute, second)
-        now = datetime.now(UTC)
+        now = datetime.utcnow()
         if date_time < now:
             await message.answer(
                 f"Дата не может быть раньше, чем сейчас. пример: 30:09:2024.10:20:00. Сейчас: {now.strftime("%d:%m:%Y.%H:%M:%S")}"

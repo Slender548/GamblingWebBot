@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher
 
 from typing import Tuple
 from os import environ
+from loguru import logger
 
 from .handlers import get_routers
 
@@ -14,4 +15,5 @@ except KeyError:
 
 
 def get_bot() -> Tuple[Bot, Dispatcher]:
+    logger.info("Бот готов!")
     return bot, dp

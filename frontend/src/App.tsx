@@ -1,22 +1,32 @@
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import NavBar from "./components/NavBar.tsx";
-import Balance from "./components/Balance.tsx";
-import Referal from "./components/Referal.tsx";
-import Game from "./components/Game.tsx";
-import Games from "./components/Games.tsx";
-import Lottery from "./components/Lottery.tsx";
-import Dice from "./components/Dice.tsx";
-import Blackjack from "./components/Blackjack.tsx";
-import Mines from "./components/Mines.tsx";
-import Crash from "./components/Crash.tsx";
-import Roulette from "./components/Roulette.tsx";
-import BlackjackPage from "./components/Blackjack_page.tsx";
-import BlackjackBot from "./components/Blackjack_bot.tsx";
-import ServerError from "./fakes/ServerError.tsx";
+import Balance from "./components/Balance";
+import Referal from "./components/Referral";
+import Game from "./components/Game";
+import Lottery from "./components/Lottery";
+import {
+  GamesPage,
+  BlackjackPage,
+  BlackjackBot,
+  BlackjackGame,
+  DicePage,
+  DiceBot,
+  DiceGame,
+  GuessGame,
+  MinesGame,
+  RouletteGame,
+  CrashGame
+} from "./components/Games";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
+//import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import "./App.css";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const retrieveLaunchParams = () => {
+  const initDataRaw = "2";
+  return { initDataRaw }
+}
 
 function App() {
   const { initDataRaw } = retrieveLaunchParams();
@@ -33,7 +43,7 @@ function App() {
         if (!data.ok) {
           return (
             <>
-              <ServerError />
+              <p>Ok</p>
             </>
           );
         }
@@ -41,7 +51,7 @@ function App() {
       .catch(() => {
         return (
           <>
-            <ServerError />
+            <p>Ok</p>
           </>
         );
       });
@@ -49,23 +59,26 @@ function App() {
 
   return (
     <>
-      <TonConnectUIProvider manifestUrl="http://localhost:8001/tonconnect-manifest.json">
+      <TonConnectUIProvider manifestUrl="/tonconnect-manifest.json">
         <Routes>
           <Route path="/referal" element={<Referal />} />
           <Route path="/balance" element={<Balance />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/games" element={<Games />} />
           <Route path="/lottery" element={<Lottery />} />
-          <Route path="/dice" element={<Dice />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/games" element={<GamesPage />} />
+          <Route path="/dice" element={<DicePage />} />
+          <Route path="/dice_game" element={<DiceGame />} />
+          <Route path="/dice_bot" element={<DiceBot />} />
           <Route path="/blackjack" element={<BlackjackPage />} />
+          <Route path="/blackjack_game" element={<BlackjackGame />} />
           <Route path="/blackjack_bot" element={<BlackjackBot />} />
-          <Route path="/mines" element={<Mines />} />
-          <Route path="/crash" element={<Crash />} />
-          <Route path="/roulette" element={<Roulette />} />
-          <Route path="/blackjack_game" element={<Blackjack />} />
+          <Route path="/mines" element={<MinesGame />} />
+          <Route path="/crash" element={<CrashGame />} />
+          <Route path="/roulette" element={<RouletteGame />} />
+          <Route path="/guess" element={<GuessGame />} />
         </Routes>
-        <NavBar />
       </TonConnectUIProvider>
+      <ToastContainer />
     </>
   );
 }

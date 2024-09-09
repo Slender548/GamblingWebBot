@@ -12,7 +12,6 @@ class PlayerRequest(DefaultRequest):
 class TransactionRequest(DefaultRequest):
     amount: float
     transaction_type: int
-    transaction_data: str
 
 
 class FinishedGameRequest(DefaultRequest):

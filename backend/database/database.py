@@ -59,6 +59,8 @@ async def create_user(telegram_id: str | int, username: str,
     Returns:
         bool: True if the user is created successfully, False otherwise.
     """
+    logger.info(f"Создан новый пользователь: Telegram ID: {telegram_id}, Никнейм: {username}, Адресс кошелька: {wallet_address}")
+    
     async with new_session() as session:
         try:
             model = Users(telegram_id=telegram_id,
@@ -107,6 +109,7 @@ async def clear_user(telegram_id: str | int) -> bool:
         >>> await clear_user("1234567890")
         True
     """
+    logger.info(f"Пользователь {telegram_id} был удален")
     async with new_session() as session:
         async with session.begin():
             statement = delete(Users).where(Users.telegram_id == telegram_id)
@@ -129,6 +132,7 @@ async def add_user_money(telegram_id: str, money: int) -> bool:
         >>> await add_user_money("123456789", 100)  # Add 100 units of money to user with Telegram ID "123456789"
         True
     """
+    logger.info(f"На баланс пользователя {telegram_id} было добавлено {money} монет")
     async with new_session() as session:
         async with session.begin():
             statement = update(Users).where(
@@ -159,6 +163,7 @@ async def subtract_user_money(telegram_id: str, money: int) -> bool:
     Notes:
         This function uses a database transaction to ensure atomicity.
     """
+    logger.info(f"С баланса пользователя {telegram_id} было вычтено {money} монет")
     async with new_session() as session:
         async with session.begin():
             statement = update(Users).where(
@@ -180,6 +185,7 @@ async def delete_user(telegram_id: str) -> bool:
     Returns:
         bool: True if the user was deleted, False otherwise
     """
+    logger.info(f"Удалён пользователь: {telegram_id}")
     async with new_session() as session:
         async with session.begin():
             statement = delete(Users).where(Users.telegram_id == telegram_id)
@@ -230,8 +236,7 @@ async def select_transactions():
                   sep=", ")
 
 
-async def create_transaction(user_id: str, amount: int, transaction_type: int,
-                             transaction_data: str) -> bool:
+async def create_transaction(user_id: str, amount: int, transaction_type: int) -> bool:
     """
     Creates a new transaction.
 
@@ -247,12 +252,12 @@ async def create_transaction(user_id: str, amount: int, transaction_type: int,
     Example:
         >>> await create_transaction("123456789", 100, 1, "Paid via credit card")
     """
+    logger.info(f"Создана транзакция: Пользователь: {user_id}, Сумма: {amount}, Тип: {"Вывод" if transaction_type else "Депозит"}")
     async with new_session() as session:
         try:
             model = Transactions(user_id=user_id,
                                  amount=amount,
-                                 transaction_type=transaction_type,
-                                 transaction_data=transaction_data)
+                                 transaction_type=transaction_type)
             session.add(model)
             await session.commit()
             return True
@@ -262,12 +267,12 @@ async def create_transaction(user_id: str, amount: int, transaction_type: int,
 
 
 async def create_bet(user_id: int, amount: int, shift_days: int) -> bool:
-    """
-        #TODO: docs
-    """
+    logger.info(
+        f"Сделана ставка: Пользователь: {user_id}, Сумма: {amount}, На время: {shift_days} д вперёд"
+    )
     async with new_session() as session:
         try:
-            created_at = datetime.now(UTC)
+            created_at = datetime.utcnow()
             supposed_at = created_at + timedelta(hours=shift_days)
             model = Bets(user_id=user_id,
                          amount=amount,
@@ -296,6 +301,9 @@ async def mark_finished_game(game_type: int,
     """
         Create finished game model and add it to database
     """
+    logger.info(
+        f"Игра помечена завершённой: Тип игры: {game_type}, Сумма: {amount}, ID 1-го игрока: {first_user_id}, ID 2-го игрока: {second_user_id}"
+    )
     async with new_session() as session:
         try:
             model = FinishedGame(game_type=game_type,
@@ -351,6 +359,9 @@ async def get_users(page: int = 1) -> List[Users]:
 
 async def edit_money_balance(telegram_id: str | int,
                              money_balance: float | int):
+    logger.info(
+        f"Был изменён монетный баланс пользователя {telegram_id} на {money_balance}"
+    )
     async with new_session() as session:
         query = select(Users).where(Users.telegram_id == telegram_id)
         result = await session.execute(query)
@@ -362,6 +373,9 @@ async def edit_money_balance(telegram_id: str | int,
 
 async def edit_dollar_balance(telegram_id: str | int,
                               dollar_balance: float | int):
+    logger.info(
+        f"Был изменён долларовый баланс пользователя {telegram_id} на {dollar_balance}"
+    )
     async with new_session() as session:
         query = select(Users).where(Users.telegram_id == telegram_id)
         result = await session.execute(query)
@@ -410,12 +424,13 @@ async def get_transaction(transaction_id: int):
 
 
 async def confirm_transaction(transaction_id: int):
+    logger.info(f"Подтверждена транзакция: {transaction_id}")
     async with new_session() as session:
         query = select(Transactions).where(
             Transactions.transaction_id == transaction_id)
         result = await session.execute(query)
         transaction = result.scalars().first()
-        transaction.confirmed_at = datetime.now(UTC)
+        transaction.confirmed_at = datetime.utcnow()
         await session.commit()
         return True
 
@@ -510,6 +525,7 @@ async def check_admin(telegram_id: str | int) -> bool:
 
 
 async def delete_referral(referral_id: int | str):
+    logger.info(f"Удалена рефералка: {referral_id}")
     async with new_session() as session:
         query = select(Referrals).where(Referrals.referral_id == referral_id)
         result = await session.execute(query)
@@ -519,12 +535,6 @@ async def delete_referral(referral_id: int | str):
         return True
 
 
-print(asyncio.run(create_user("2134", "ohmygod", "212wwdaafas")))
-
-
-#print(asyncio.run(create_transaction(1, 500, 1, "Прикол")))
-
-#asyncio.run(select_transactions())
 async def catch_sum():
     async with new_session() as session:
         query = select(db.func.sum(
@@ -532,6 +542,3 @@ async def catch_sum():
         result = await session.execute(query)
         sum = result.scalar()
         print(sum)
-
-
-asyncio.run(catch_sum())

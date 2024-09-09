@@ -5,8 +5,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import asyncio
 from os import environ
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, timedelta
 from uuid import uuid4
+from loguru import logger
 
 engine = create_async_engine(environ["database_url"],
                              isolation_level="AUTOCOMMIT")
@@ -113,4 +114,20 @@ async def create_tables():
         await conn.run_sync(Model.metadata.create_all)
 
 
-asyncio.run(create_tables())
+try:
+    loop = asyncio.get_running_loop()
+except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+    loop = None
+if loop and loop.is_running():
+    print(
+        'Async event loop already running. Adding coroutine to the event loop.'
+    )
+    tsk = loop.create_task(create_tables())
+    # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
+    # Optionally, a callback function can be executed when the coroutine completes
+    tsk.add_done_callback(
+        lambda t: print(f'Task done with result={t.result()}  << None'))
+else:
+    print('Starting new event loop')
+    result = asyncio.run(create_tables())
+logger.info('Модели из БД готовы к использованию')

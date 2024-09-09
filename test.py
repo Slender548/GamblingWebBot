@@ -1,14 +1,50 @@
-from datetime import datetime, timedelta, UTC
+import aiohttp
+from bs4 import BeautifulSoup
 
-now = datetime.now(tz=UTC)
 
-#Make shift 3 hours +
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.text()
 
-shift_start = now + timedelta(hours=48)
 
-#Make shift 3 hours -
+async def main():
+    async with aiohttp.ClientSession(
+        headers={
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        }
+    ) as session:
+        html = await fetch(session, "https://coinmarketcap.com")
+        soup = BeautifulSoup(html, "html.parser")
+        table = soup.find("tbody")
+        trs = table.find_all("tr", limit=20)
+        coins = []
+        for tr in trs:
+            tds = tr.find_all("td")
+            price = tds[3].get_text()
+            value, rate = tds[2].get_text(" ", strip=True).rsplit(" ", maxsplit=1)
+            coins.append({"value": value, "rate": rate, "price": price})
+        print(coins)
 
-shift_end = now - timedelta(hours=3)
 
-print(f"Shift start: {shift_start.strftime('%Y-%m-%d %H:%M:%S')}")
-print(f"Shift end: {shift_end.strftime('%d-%m-%Y.%H:%M:%S.%f')[:-4]}")
+async def coin(id: int):
+    async with aiohttp.ClientSession(
+        headers={
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        }
+    ) as session:
+        html = await fetch(session, "https://coinmarketcap.com")
+        soup = BeautifulSoup(html, "html.parser")
+        table = soup.find("tbody")
+        tr = table.find_all("tr", limit=20)[id - 1]
+        tds = tr.find_all("td")
+        price = tds[3].get_text()
+        value, rate = tds[2].get_text(" ", strip=True).rsplit(" ", maxsplit=1)
+        print(value, rate, price)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(coin(20))
+    # loop.run_until_complete(main())

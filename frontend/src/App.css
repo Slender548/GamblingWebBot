@@ -46,9 +46,8 @@
   font-style: italic;
 }
 
-
 :root {
-  --btn-active: #4CAF50;
+  --btn-active: #4caf50;
   --btn-color: #45a049;
 }
 
@@ -56,7 +55,7 @@ body {
   background-color: rgb(255, 255, 255);
 }
 .nav {
-  position:fixed;
+  position: fixed;
   bottom: 0;
   left: 0;
   width: 99.75vw;
@@ -73,13 +72,123 @@ body {
   border: white solid 1px;
   width: 16%;
   height: 75%;
-  background-image: linear-gradient(90deg, rgb(255, 0, 208) 0%, rgb(51, 0, 255) 100%);
+  background-image: linear-gradient(
+    90deg,
+    rgb(255, 0, 208) 0%,
+    rgb(51, 0, 255) 100%
+  );
   color: white;
   transition: all 0.2s;
 }
-.btn-nav:hover {
-  font-size: 15px;
-  color: rgb(36, 32, 32);
+@media (hover: none) {
+  .btn-nav:active {
+    font-size: 15px;
+    color: rgb(36, 32, 32);
+  }
+  .btn-money:active {
+    transform: scale(1.05);
+  }
+  .btn-game-enter:active {
+    font-size: 20px;
+    padding: 8px;
+    color: black;
+    background-image: linear-gradient(
+      90deg,
+      rgb(255, 0, 255) 0%,
+      rgb(150, 0, 255) 100%
+    );
+  }
+  .btn-create:active {
+    background-image: linear-gradient(90deg, #45a049, #1b5e20);
+    transform: scale(1.05);
+    color: black;
+  }
+  .btn-cancel:active {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    transform: scale(1.05);
+    color: black;
+  }
+  .dice-join:active {
+    background-color: #3700b3;
+    transform: scale(1.05);
+  }
+  .btn-dice-create:active {
+    font-size: 25px;
+    transform: scale(1.05);
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+  }
+}
+
+@media (hover: hover) {
+  .btn-nav:hover {
+    font-size: 15px;
+    color: rgb(36, 32, 32);
+  }
+  .btn-money:hover {
+    transform: scale(1.05);
+  }
+  .btn-money:active {
+    transform: scale(1.1);
+  }
+  .btn-game-enter:hover {
+    font-size: 20px;
+    padding: 8px;
+    color: black;
+    background-image: linear-gradient(
+      90deg,
+      rgb(255, 0, 255) 0%,
+      rgb(150, 0, 255) 100%
+    );
+  }
+
+  .btn-game-enter:active {
+    color: grey;
+    font-size: 25px;
+  }
+  .btn-create:hover {
+    background-image: linear-gradient(90deg, #45a049, #1b5e20);
+    transform: scale(1.05);
+    color: black;
+  }
+
+  .btn-create:active {
+    background-image: linear-gradient(90deg, #45a049, #1b5e20);
+    color: white;
+    transform: scale(0.95);
+  }
+
+  .btn-cancel:hover {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    transform: scale(1.05);
+    color: black;
+  }
+
+  .btn-cancel:active {
+    background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
+    color: white;
+    transform: scale(0.95);
+  }
+  .dice-join:hover {
+    background-color: #3700b3;
+    transform: scale(1.05);
+  }
+  .dice-join:active {
+    background-color: #03dac6;
+    transform: scale(0.95);
+  }
+  .btn-dice-create:hover {
+    font-size: 25px;
+    transform: scale(1.05);
+    color: black;
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+  }
+  .btn-dice-create:active {
+    background-image: linear-gradient(90deg, #ff0000, #ff9900);
+    color: white;
+    font-size: 25px;
+    transform: scale(0.95);
+  }
 }
 
 .page-title {
@@ -87,7 +196,7 @@ body {
   background-color: black;
   top: 0;
   left: 0;
-  width: 99.7%;
+  width: 99.75vw;
   height: 10vh;
   border-radius: 0 0 1rem 1rem;
   border: 1px solid black;
@@ -112,7 +221,7 @@ body {
 .cell {
   display: flex;
   width: 90%;
-  justify-content:center;
+  justify-content: center;
   border: 1px solid #b0b0b0;
   margin: 0.3em 0;
   border-radius: 0.8em;
@@ -126,37 +235,26 @@ body {
   color: white;
   transition: transform 0.3s ease;
 }
-.btn-money:hover {
-  transform: scale(1.05);
-}
-.btn-money:active {
-  transform: scale(1.1);
-}
+
 .btn-active {
   color: black;
   transition: transform 0.3s ease;
 }
-.btn-active:hover {
-  transform: scale(1.05);
-}
-.btn-active:active {
-  transform: scale(1.1);
-}
 .page-other-games-cell {
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   display: flex;
-  flex-direction: row;
+  width: 100%;
 }
 .page-other-games-game-cell {
-  border: 1px solid #b0b0b0;
-  border-radius: 10%;
   width: 40%;
-  margin: 5% 5%;
   padding: 1%;
   display: flex;
   flex-direction: column;
 }
 .img-game-enter {
-  width: 38vw;
+  /* width: 38vw; */
   height: 10vh;
   justify-content: center;
   align-self: center;
@@ -165,7 +263,11 @@ body {
 .btn-game-enter {
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(90deg, #e50000, #ffb700);
+  background-image: linear-gradient(
+    90deg,
+    rgb(255, 0, 208) 0%,
+    rgb(51, 0, 255) 100%
+  );
   color: white;
   border: none;
   border-radius: 15%;
@@ -175,17 +277,7 @@ body {
   padding: 10px;
   transition: all 0.5s;
 }
-.btn-game-enter:hover {
-  font-size: 20px;
-  padding: 0;
-  color: black;
-  background-image: linear-gradient(90deg, #ff0000, #ff9900);
-}
 
-.btn-game-enter:active {
-  color: grey;
-  font-size: 25px;
-}
 /* Common Popup Styles */
 .popup {
   position: fixed;
@@ -233,29 +325,18 @@ body {
 }
 
 /* Button Styles */
-.btn-create, .btn-cancel {
+.btn-create,
+.btn-cancel {
   padding: 10px 20px;
   cursor: pointer;
 }
 
 .btn-create {
-  background-image: linear-gradient(90deg, #4CAF50, #2E7D32);
+  background-image: linear-gradient(90deg, #4caf50, #2e7d32);
   color: white;
   border: none;
   border-radius: 5px;
   transition: all 0.2s;
-}
-
-.btn-create:hover {
-  background-image: linear-gradient(90deg, #45a049, #1B5E20);
-  transform: scale(1.05);
-  color: black;
-}
-
-.btn-create:active {
-  background-image: linear-gradient(90deg, #45a049, #1B5E20);
-  color: white;
-  transform: scale(0.95);
 }
 
 .btn-cancel {
@@ -266,17 +347,6 @@ body {
   transition: all 0.2s;
 }
 
-.btn-cancel:hover {
-  background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
-  transform: scale(1.05);
-  color: black;
-}
-
-.btn-cancel:active {
-  background-image: linear-gradient(90deg, #d32f2f, #b71c1c);
-  color: white;
-  transform: scale(0.95);
-}
 .dice-table {
   display: flex;
   flex-direction: column;
@@ -308,14 +378,7 @@ body {
   font-size: 14px;
   color: #d1c4e9;
 }
-.dice-join:hover {
-  background-color: #3700b3;
-  transform: scale(1.05);
-}
-.dice-join:active {
-  background-color: #03dac6;
-  transform: scale(0.95);
-}
+
 .dice-create {
   position: absolute;
   right: 2%;
@@ -340,38 +403,18 @@ body {
   transition: all 0.2s;
   border: 1px solid white;
 }
-.btn-dice-create:hover {
-  font-size: 25px;
-  transform: scale(1.05);
-  color: black;
-  background-image: linear-gradient(90deg, #ff0000, #ff9900);
-}
-.btn-dice-create:active {
-  background-image: linear-gradient(90deg, #ff0000, #ff9900);
-  color: white;
-  font-size: 25px;
-  transform: scale(0.95);
-}
+
 /* * { box-sizing: border-box; } */
 
 .scene {
-width: 50vw;
-height: 50vh;
-margin: 20px;
-perspective: 40vh;
+  width: 50vw;
+  height: 50vh;
+  margin: 20px;
+  perspective: 40vh;
 }
 
 .cube1 {
-width:200px;
-height: 200px;
-position: relative;
-transform-style: preserve-3d;
-transform: translateZ(-100px);
-transition: transform 0.1s;
-}
-
-.cube2 {
-  width:200px;
+  width: 200px;
   height: 200px;
   position: relative;
   transform-style: preserve-3d;
@@ -379,38 +422,89 @@ transition: transform 0.1s;
   transition: transform 0.1s;
 }
 
-.cube.show-1  { transform: translateZ(-100px) rotateY(   0deg); }
-.cube.show-2  { transform: translateZ(-100px) rotateY(-180deg); }
-.cube.show-3  { transform: translateZ(-100px) rotateY( -90deg); }
-.cube.show-4   { transform: translateZ(-100px) rotateY(  90deg); }
-.cube.show-5   { transform: translateZ(-100px) rotateX( -90deg); }
-.cube.show-6 { transform: translateZ(-100px) rotateX(  90deg); }
-
-.cube__face {
-position: absolute;
-width: 200px;
-height: 200px;
-border: 4px solid white;
-line-height: 200px;
-font-size: 40px;
-font-weight: bold;
-color: white;
-text-align: center;
+.cube2 {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: translateZ(-100px);
+  transition: transform 0.1s;
 }
 
-.cube__face--1  { background: black;  opacity: 0.75;}
-.cube__face--3  { background: black;   opacity: 0.75; }
-.cube__face--2  {  background: black;   opacity: 0.75; }
-.cube__face--4  {  background: black;   opacity: 0.75; }
-.cube__face--5   {  background: black;   opacity: 0.75; }
-.cube__face--6 {  background: black;  opacity: 0.75; }
+.cube.show-1 {
+  transform: translateZ(-100px) rotateY(0deg);
+}
+.cube.show-2 {
+  transform: translateZ(-100px) rotateY(-180deg);
+}
+.cube.show-3 {
+  transform: translateZ(-100px) rotateY(-90deg);
+}
+.cube.show-4 {
+  transform: translateZ(-100px) rotateY(90deg);
+}
+.cube.show-5 {
+  transform: translateZ(-100px) rotateX(-90deg);
+}
+.cube.show-6 {
+  transform: translateZ(-100px) rotateX(90deg);
+}
 
-.cube__face--1  { transform: rotateY(  0deg) translateZ(100px); }
-.cube__face--2   { transform: rotateY(180deg) translateZ(100px); }
-.cube__face--3  { transform: rotateY( 90deg) translateZ(100px); }
-.cube__face--4   { transform: rotateY(-90deg) translateZ(100px); }
-.cube__face--5   { transform: rotateX( 90deg) translateZ(100px); }
-.cube__face--6 { transform: rotateX(-90deg) translateZ(100px); }
+.cube__face {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 4px solid white;
+  line-height: 200px;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+.cube__face--1 {
+  background: black;
+  opacity: 0.75;
+}
+.cube__face--3 {
+  background: black;
+  opacity: 0.75;
+}
+.cube__face--2 {
+  background: black;
+  opacity: 0.75;
+}
+.cube__face--4 {
+  background: black;
+  opacity: 0.75;
+}
+.cube__face--5 {
+  background: black;
+  opacity: 0.75;
+}
+.cube__face--6 {
+  background: black;
+  opacity: 0.75;
+}
+
+.cube__face--1 {
+  transform: rotateY(0deg) translateZ(100px);
+}
+.cube__face--2 {
+  transform: rotateY(180deg) translateZ(100px);
+}
+.cube__face--3 {
+  transform: rotateY(90deg) translateZ(100px);
+}
+.cube__face--4 {
+  transform: rotateY(-90deg) translateZ(100px);
+}
+.cube__face--5 {
+  transform: rotateX(90deg) translateZ(100px);
+}
+.cube__face--6 {
+  transform: rotateX(-90deg) translateZ(100px);
+}
 
 .history-content {
   max-height: 300px; /* Adjust the height as needed */
@@ -446,7 +540,7 @@ text-align: center;
 .tgl + .tgl-btn {
   box-sizing: border-box;
   &::selection {
-      background: none;
+    background: none;
   }
 }
 
@@ -460,17 +554,17 @@ text-align: center;
   user-select: none;
   &:after,
   &:before {
-      position: relative;
-      display: block;
-      content: "";
-      width: 50%;
-      height: 100%;
+    position: relative;
+    display: block;
+    content: "";
+    width: 50%;
+    height: 100%;
   }
   &:after {
-      left: 0;
+    left: 0;
   }
   &:before {
-      display: none;
+    display: none;
   }
 }
 
@@ -487,43 +581,43 @@ text-align: center;
   background: #888;
   &:after,
   &:before {
-      transform: skew(10deg);
-      display: inline-block;
-      transition: all 0.2s ease;
-      width: 100%;
-      text-align: center;
-      position: absolute;
-      line-height: 2em;
-      font-weight: bold;
-      color: #fff;
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    transform: skew(10deg);
+    display: inline-block;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    line-height: 2em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   }
   &:after {
-      left: 100%;
-      content: attr(data-tg-on);
+    left: 100%;
+    content: attr(data-tg-on);
   }
   &:before {
-      left: 0;
-      content: attr(data-tg-off);
+    left: 0;
+    content: attr(data-tg-off);
   }
   &:active {
-      background: #888;
-      &:before {
-          left: -10%;
-      }
+    background: #888;
+    &:before {
+      left: -10%;
+    }
   }
 }
 
 .tgl:checked + .tgl-btn {
   background: #86d993;
   &:before {
-      left: -100%;
+    left: -100%;
   }
   &:after {
-      left: 0;
+    left: 0;
   }
   &:active:after {
-      left: 10%;
+    left: 10%;
   }
 }
 
