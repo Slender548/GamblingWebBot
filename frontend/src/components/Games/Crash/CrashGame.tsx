@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./CrashGame.css";
 import { toast } from "react-toastify";
 import NavBar from "../../NavBar";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
 
 const CrashGame: React.FC = () => {
@@ -10,6 +11,7 @@ const CrashGame: React.FC = () => {
   const [hasBetPlaced, setHasBetPlaced] = useState<boolean>(false);
   const [reward, setReward] = useState<number>(100);
   const [graphPoints, setGraphPoints] = useState<Array<{ x: number; y: number }>>([]);
+  const { initData, initDataRaw } = retrieveLaunchParams();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [crashMultiplier, setCrashMultiplier] = useState<number | null>(null);
 
@@ -47,8 +49,18 @@ const CrashGame: React.FC = () => {
   const crashGame = () => {
     setIsGameActive(false);
     setHasBetPlaced(false);
-    toast.warn("Игра завершена!");
-    //TODO: lose
+    toast.warn(`Вы проиграли ${reward}$`);
+    fetch('/api/game/finish', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        player_id: initData?.user?.id,
+        initData: initDataRaw,
+        reward: -reward
+      }),
+    })
   };
 
   const placeBet = () => {
@@ -72,7 +84,18 @@ const CrashGame: React.FC = () => {
     setIsGameActive(false);
     setHasBetPlaced(false);
     toast.success(`Вы вывели с множителем ${multiplier.toPrecision(3)}x!`);
-    //TODO: cash out
+    fetch('/api/game/finish', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        player_id: initData?.user?.id,
+        initData: initDataRaw,
+        reward: (reward * multiplier) - reward
+      }),
+    });
+
     setMultiplier(1)
   };
 

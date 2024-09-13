@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import "./MinesGame.css";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
 interface Cell {
   hasMine: boolean;
@@ -55,6 +56,7 @@ const generateBoard = (rows: number, cols: number, mines: number) => {
 
 const Mines: React.FC = () => {
   const [board, setBoard] = useState<Cell[][]>([]);
+  const { initData, initDataRaw } = retrieveLaunchParams();
   const [difficulty, setDifficulty] = useState<"лёгкая" | "сложная" | null>(
     null
   );
@@ -88,6 +90,17 @@ const Mines: React.FC = () => {
 
     if (cell.hasMine) {
       toast.warn("Вы проиграли");
+      fetch('/api/game/finish', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          reward: betRef.current?.value ? -Number(betRef.current.value) : 0,
+        }),
+      })
       setGameOver(true);
       revealAllMines(newBoard);
     } else {
@@ -120,6 +133,17 @@ const Mines: React.FC = () => {
     if (unrevealedCells.length === 0) {
       setGameOver(true);
       toast.success("Вы выиграли!");
+      fetch('/api/game/finish', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          reward: betRef.current?.value ? -Number(betRef.current.value) : 0
+        }),
+      })
     }
   };
 
@@ -186,9 +210,8 @@ const Mines: React.FC = () => {
                 {row.map((cell, colIndex) => (
                   <div
                     key={colIndex}
-                    className={`celll ${cell.isRevealed ? "revealed" : ""} ${
-                      cell.isFlagged ? "flagged" : ""
-                    }`}
+                    className={`celll ${cell.isRevealed ? "revealed" : ""} ${cell.isFlagged ? "flagged" : ""
+                      }`}
                     onClick={() => handleClick(rowIndex, colIndex)}
                     onContextMenu={(e) =>
                       handleRightClick(e, rowIndex, colIndex)
@@ -197,8 +220,8 @@ const Mines: React.FC = () => {
                     {cell.isRevealed && cell.hasMine
                       ? "💣"
                       : cell.isRevealed && cell.surroundingMines > 0
-                      ? cell.surroundingMines
-                      : ""}
+                        ? cell.surroundingMines
+                        : ""}
                   </div>
                 ))}
               </div>

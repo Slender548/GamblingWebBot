@@ -14,7 +14,7 @@ export default function Referral(): JSX.Element {
   const [reward, setReward] = useState<number>(0);
   const [referral, setReferral] = useState<number>(0);
   const [link, setLink] = useState<string>("");
-  const { initDataRaw, initData } = retrieveLaunchParams();
+  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
   useEffect(() => {
     fetchReward(initDataRaw, initData?.user?.id).then(
       (reward) => {

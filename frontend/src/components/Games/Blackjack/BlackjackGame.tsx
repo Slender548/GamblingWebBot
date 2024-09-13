@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 const BlackjackGame: React.FC = () => {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("room_id");
-  const { initDataRaw, initData } = retrieveLaunchParams();
+  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
   const playerId = initData?.user?.id;
   const [steps, setSteps] = useState<number>(-1);
   const [player1Result, setPlayer1Result] = useState<number>(0);

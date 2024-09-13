@@ -11,6 +11,7 @@ import blackChip from "../../../assets/images/chips/black-chip.png";
 import cyanChip from "../../../assets/images/chips/cyan-chip.png";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 
 const API = {
   getRandomBet: async (): Promise<string> => {
@@ -62,6 +63,7 @@ const RouletteGame = () => {
   const [activeChip, setActiveChip] = useState<string>(
     Object.keys(chipsMap)[0]
   );
+  const { initData, initDataRaw } = retrieveLaunchParams();
 
   const [isRouletteWheelSpinning, setIsRouletteWheelSpinning] =
     useState<boolean>(false);
@@ -309,10 +311,43 @@ const RouletteGame = () => {
     });
     if (totalBet > winAmount) {
       toast.warn(`Вы проиграли ${totalBet - winAmount}$`);
+      fetch('/api/game/finish', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          reward: totalBet - winAmount
+        }),
+      })
     } else if (totalBet === winAmount) {
       toast.success(`Вы ничего не потеряли`);
+      fetch('/api/game/finish', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          reward: 0
+        }),
+      })
     } else if (totalBet < winAmount) {
       toast.success(`Вы выиграли ${winAmount - totalBet}$`);
+      fetch('/api/game/finish', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          reward: totalBet - winAmount
+        }),
+      });
     }
   };
 

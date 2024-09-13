@@ -17,19 +17,17 @@ import {
   RouletteGame,
   CrashGame
 } from "./components/Games";
+import RegisterPage from "./components/Register";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
-//import { retrieveLaunchParams } from "@telegram-apps/sdk";
+import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import "./App.css";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const retrieveLaunchParams = () => {
-  const initDataRaw = "2";
-  return { initDataRaw }
-}
+
 
 function App() {
-  const { initDataRaw } = retrieveLaunchParams();
+  const { initDataRaw } = { initDataRaw: 2 }
   useEffect(() => {
     fetch("/api/initdata/check", {
       method: "POST",
@@ -41,11 +39,8 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (!data.ok) {
-          return (
-            <>
-              <p>Ok</p>
-            </>
-          );
+          toast.warning("Сначала зарегистрируйтесь!")
+          window.location.href = "reg"
         }
       })
       .catch(() => {
@@ -59,7 +54,7 @@ function App() {
 
   return (
     <>
-      <TonConnectUIProvider manifestUrl="/tonconnect-manifest.json">
+      <TonConnectUIProvider manifestUrl="https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json">
         <Routes>
           <Route path="/referal" element={<Referal />} />
           <Route path="/balance" element={<Balance />} />
@@ -76,6 +71,7 @@ function App() {
           <Route path="/crash" element={<CrashGame />} />
           <Route path="/roulette" element={<RouletteGame />} />
           <Route path="/guess" element={<GuessGame />} />
+          <Route path="/reg" element={<RegisterPage />} />
         </Routes>
       </TonConnectUIProvider>
       <ToastContainer />

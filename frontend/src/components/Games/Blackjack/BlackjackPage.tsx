@@ -13,7 +13,7 @@ const BlackjackPage = () => {
   const [rooms, setRooms] = useState<Array<BlackjackRoom>>([]);
   const nameRef: RefObject<HTMLInputElement> = useRef(null);
   const rewardRef: RefObject<HTMLInputElement> = useRef(null);
-  const { initDataRaw, initData } = retrieveLaunchParams();
+  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
 
   useEffect(() => {
     const fetchRooms = async () => {

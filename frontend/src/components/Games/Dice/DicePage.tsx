@@ -11,7 +11,7 @@ interface DiceRoom {
 export default function DicePage(): JSX.Element {
   const [rooms, setRooms] = useState<Array<DiceRoom>>([]);
   const [createPopup, setCreatePopup] = useState<boolean>(false);
-  const { initDataRaw, initData } = retrieveLaunchParams();
+  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
   const nameRef = useRef<HTMLInputElement>(null);
   const rewardRef = useRef<HTMLInputElement>(null);
   useEffect(() => {

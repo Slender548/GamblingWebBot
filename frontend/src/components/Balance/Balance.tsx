@@ -20,7 +20,7 @@ interface Transaction {
  * @return {JSX.Element} The JSX element representing the balance page.
  */
 export default function Balance(): JSX.Element {
-  const { initDataRaw, initData } = retrieveLaunchParams();
+  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
   const [withdrawPopup, setWithdrawPopup] = useState<boolean>(false);
   const [depositPopup, setDepositPopup] = useState<boolean>(false);
   const [historyPopup, setHistoryPopup] = useState<boolean>(false);
@@ -32,13 +32,13 @@ export default function Balance(): JSX.Element {
   useEffect(() => {
     fetchData(initDataRaw, initData?.user?.id).then((balances) => {
       if (balances[0] === -1 && balances[1] === -1) {
-        toast.error("Не удалось получить данные. Перезагрузите страницу")
+        toast.error("Не удалось получить данные. Перезагрузите страницу");
       } else {
         setDollarBalance(balances[0]);
         setMoneyBalance(balances[1]);
       }
     })
-    fetchHistory(initDataRaw, initData?.user?.id).then((transactions) => { setTransactions(transactions) })
+    fetchHistory(initDataRaw, initData?.user?.id).then((transactions) => { setTransactions(transactions) });
   }, [initData?.user?.id, initDataRaw]);
 
   const moneyEnding: string =

@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 const DiceGame: React.FC = () => {
     const [searchParams] = useSearchParams();
     const roomId = searchParams.get("room_id");
-    const { initDataRaw, initData } = retrieveLaunchParams();
+    const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
     const playerId = initData?.user?.id;
     const [selfSteps, setSelfSteps] = useState<number>(0);
     const [otherSteps, setOtherSteps] = useState<number>(0);

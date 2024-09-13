@@ -30,13 +30,12 @@ const GuessPage: React.FC = () => {
         setWay(e.target.checked)
     }
 
+
+
     useEffect(() => {
         const updateCoins = async () => {
             try {
-                const response = await fetch('/api/guess/currencies',
-                    {
-                        method: 'GET',
-                    });
+                const response = await fetch('/api/guess/currencies');
                 const data = await response.json();
                 if (data.ok) {
                     setCoins(data.coins);
