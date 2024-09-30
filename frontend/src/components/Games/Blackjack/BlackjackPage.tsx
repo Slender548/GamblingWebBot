@@ -1,6 +1,9 @@
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import NavBar from "../../NavBar";
+import NumberInput from "../../NumberInput";
 
 interface BlackjackRoom {
   name: string;
@@ -8,12 +11,15 @@ interface BlackjackRoom {
   room_id: string;
 }
 
-const BlackjackPage = () => {
+
+
+const BlackjackPage: React.FC = (): JSX.Element => {
   const [createPopup, setCreatePopup] = useState<boolean>(false);
   const [rooms, setRooms] = useState<Array<BlackjackRoom>>([]);
-  const nameRef: RefObject<HTMLInputElement> = useRef(null);
-  const rewardRef: RefObject<HTMLInputElement> = useRef(null);
-  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
+  const [reward, setReward] = useState<number>(0);
+  const [name, setName] = useState<string>("");
+  const navigate = useNavigate();
+  const { initDataRaw, initData } = getLaunchParams();
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -31,8 +37,6 @@ const BlackjackPage = () => {
 
 
   const createBlackjack = async () => {
-    const name = nameRef.current?.value;
-    const reward = rewardRef.current?.value;
     if (!name || !reward) {
       toast.error("Необходимо заполнить все поля");
       return;
@@ -59,7 +63,7 @@ const BlackjackPage = () => {
     const data = await response.json();
 
     //redirect to blackjack?room_id=room_id&reward=reward
-    window.location.href = `/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`;
+    navigate(`/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`);
   };
 
   const joinBlackjack = async (room_id: string) => {
@@ -88,11 +92,11 @@ const BlackjackPage = () => {
       reward: number;
     } = await response.json();
 
-    window.location.href = `/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`;
+    navigate(`/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`);
   };
 
   const botStartDice = () => {
-    window.location.href = "/blackjack_bot";
+    navigate("/blackjack_bot");
   };
 
   const setShowCreatePopup = () => {
@@ -116,15 +120,24 @@ const BlackjackPage = () => {
     createBlackjack();
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+
+  const handleRewardChange = (num: string) => {
+    const numb = Number(num);
+    setReward(numb);
+  }
+
   const showCreatePopup = () => {
     return (
       <div id="createPopup" className="popup">
         <div className="popup-content">
           <h2>Создать игру</h2>
           <label>Название</label>
-          <input type="text" ref={nameRef} name="game-name" maxLength={20} />
+          <input type="text" style={{ textAlign: "center" }} onChange={handleNameChange} maxLength={20} />
           <label>Награда</label>
-          <input type="number" ref={rewardRef} name="game-reward" />
+          <NumberInput onChange={handleRewardChange} />
           <div className="popup-buttons">
             <button type="submit" className="btn-create" onClick={createGame}>
               Создать
@@ -158,18 +171,27 @@ const BlackjackPage = () => {
         </div>
         <div className="dice-table">
           {rooms.map((room, index: number) => (
+
             <button
               className="dice-join"
               key={index}
               onClick={() => joinBlackjack(room.room_id)}
             >
               <div className="dice-join-title">{room.name}</div>
-              <div className="dice-join-reward">{room.reward}$</div>
+              <div className="dice-join-reward">{room.reward} {
+                room.reward % 10 === 1 && room.reward % 100 !== 11
+                  ? "монета"
+                  : 2 <= room.reward % 10 &&
+                    room.reward % 10 <= 4 &&
+                    !(12 <= room.reward % 100 && room.reward % 100 <= 14)
+                    ? "монеты"
+                    : "монет"}</div>
             </button>
           ))}
         </div>
       </div>
       {createPopup && showCreatePopup()}
+      <NavBar stricted={false} />
     </>
   );
 };

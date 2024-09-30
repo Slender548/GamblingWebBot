@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from database import db
 from telegram_bot.states import States
-from telegram_bot.keyboards import get_nav_keyboard, get_balance_keyboard, get_home_keyboard, get_money_keyboard, get_dollar_keyboard
+from telegram_bot.keyboards import get_nav_keyboard, get_balance_keyboard, get_home_keyboard, get_money_keyboard
 
 router = Router(name=__name__)
 
@@ -12,7 +12,8 @@ batch_size: int = 10
 
 @router.callback_query(F.data.startswith("Balances_"))
 async def balances(callback: CallbackQuery, state: FSMContext, bot: Bot):
-    _, page = callback.data.split("_")
+    _, page_str = callback.data.split("_")
+    page = int(page_str)
     count_balances = await db.get_count_users()
     if page < 0:
         await bot.answer_callback_query(callback.id, "Назад некуда")
@@ -25,13 +26,13 @@ async def balances(callback: CallbackQuery, state: FSMContext, bot: Bot):
     answer = f"Балансы {start}-{end} из {count_balances}\n\n"
     data = list()
     for idx, balance in enumerate(balances, start=1):
-        data.append(balance.user_id)
-        answer += f"{idx}.ID Владельца:{balance.user_id}. Монет:{balance.money_balance}. $:{balance.dollar_balance}\n"
+        data.append(balance.telegram_id)
+        answer += f"{idx}.ID Владельца:{balance.telegram_id}. Монет:{balance.money_balance}.\n"
     answer += "\n(если вам нужна конкретная страница, введите номер баланса на этой странице)"
     await state.set_state(States.Balances)
     await callback.message.edit_text(answer,
                                      reply_markup=get_nav_keyboard(
-                                         "Balances", page, count_balances))
+                                         "Balances", page, count_balances, data))
 
 
 @router.message(States.Balances)
@@ -52,24 +53,23 @@ async def search_balances(message: Message, state: FSMContext):
     answer = f"Балансы {start}-{end} из {count_balances}\n\n"
     data = list()
     for idx, balance in enumerate(balances, start=1):
-        data.append(balances.telegram_id)
-        answer += f"ID ТГ Владельца:{balance.telegram_id}. Монет:{balance.money_balance}. $:{balance.dollar_balance}\n"
+        data.append(balance.telegram_id)
+        answer += f"ID ТГ Владельца:{balance.telegram_id}. Монет:{balance.money_balance}.\n"
     answer += "\n(если вам нужна конкретная страница, введите номер баланса на этой странице)"
     await state.set_state(States.Balances)
     await message.answer(answer,
                          reply_markup=get_nav_keyboard("Balances", page,
-                                                       count_balances))
+                                                       count_balances, data))
 
 
 @router.callback_query(F.data.startswith("Balance_"))
 async def manage_balance(callback: CallbackQuery):
     _, id = callback.data.split("_")
-    balance = await db.get_user(id)
+    balance = await db.get_user(int(id))
     await callback.message.edit_text(
         text=(f"ID Владельца баланса: {balance.user_id}\n"
               f"ID Телеграмма владельца баланса: {balance.telegram_id}\n"
               f"Никнейм владельца баланса: {balance.username}\n"
-              f"Долларовый баланс: {balance.dollar_balance}\n"
               f"Монетный баланс: {balance.money_balance}"),
         reply_markup=get_balance_keyboard(balance.telegram_id))
 
@@ -78,7 +78,7 @@ async def manage_balance(callback: CallbackQuery):
 async def edit_money_balance(callback: CallbackQuery, state: FSMContext):
     _, id = callback.data.split("_")
     await state.set_state(States.EditMoneyBalance)
-    await state.set_data({"balance_id": id})
+    await state.set_data({"balance_id": int(id)})
     await callback.message.edit_text(text="Введите новую сумму",
                                      reply_markup=get_home_keyboard())
 
@@ -112,39 +112,3 @@ async def change_money_balance_confirm(callback: CallbackQuery,
         reply_markup=get_home_keyboard())
 
 
-@router.callback_query(F.data.startswith("EditDollarBalance_"))
-async def edit_dollar_balance(callback: CallbackQuery, state: FSMContext):
-    _, id = callback.data.split("_")
-    await state.set_state(States.EditDollarBalance)
-    await state.set_data({"balance_id": id})
-    await callback.message.edit_text(text="Введите новую сумму",
-                                     reply_markup=get_home_keyboard())
-
-
-@router.message(States.EditDollarBalance)
-async def change_dollar_balance(message: Message, state: FSMContext):
-    data = await state.get_data()
-    balance_id = data.get("balance_id")
-    if not message.text.isdigit() and '.' not in message.text:
-        await message.answer(text="Введите число.")
-        return
-    if '.' in message.text:
-        money_balance = float(message.text)
-    else:
-        money_balance = int(message.text)
-    await state.clear()
-    await message.answer((
-        f"Вы точно хотите изменить долларовый баланс пользователя с ID Телеграмма {balance_id} на {money_balance:.2f}?"
-    ),
-                         reply_markup=get_dollar_keyboard(
-                             balance_id, money_balance))
-
-
-@router.callback_query(F.data.startswith("SureEditDollarBalance_"))
-async def change_dollar_balance_confirm(callback: CallbackQuery,
-                                        state: FSMContext):
-    _, balance_id, money_balance = callback.data.split("_")
-    await db.edit_dollar_balance(int(balance_id), float(money_balance))
-    await callback.message.edit_text(
-        f"Вы успешно изменили долларовый баланс пользователя с ID Телеграмма на {money_balance}",
-        reply_markup=get_home_keyboard())

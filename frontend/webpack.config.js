@@ -1,6 +1,8 @@
-const path = require('path');
+// const path = require('path');
+import path from "path";
 
-module.exports = {
+// module.exports = {
+export default {
   entry: './src/index.js',
   output: {
     filename: 'bundle.js',
@@ -9,7 +11,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(png|jpg|jpeg|gif)$/i,
+        test: /\.(png|jpg|jpeg)$/i,
         type: 'asset/resource',
       },
     ],

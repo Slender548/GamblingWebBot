@@ -1,8 +1,9 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 import "./MinesGame.css";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import NumberInput from "../../NumberInput";
 
 interface Cell {
   hasMine: boolean;
@@ -56,25 +57,39 @@ const generateBoard = (rows: number, cols: number, mines: number) => {
 
 const Mines: React.FC = () => {
   const [board, setBoard] = useState<Cell[][]>([]);
-  const { initData, initDataRaw } = retrieveLaunchParams();
+  const { initDataRaw, initData } = getLaunchParams();
   const [difficulty, setDifficulty] = useState<"лёгкая" | "сложная" | null>(
     null
   );
   const [gameOver, setGameOver] = useState<boolean>(false);
-  const betRef = useRef<HTMLInputElement>(null);
+  const [bet, setBet] = useState<number>(0);
 
-  const startGame = (difficulty: "лёгкая" | "сложная") => {
+  const startGame = useCallback(async (difficulty: "лёгкая" | "сложная") => {
     const { rows, cols, mines } = difficulties[difficulty];
-    if (betRef.current?.value && Number(betRef.current.value) > 0) {
-      toast.info("Игра началась");
-    } else {
+    if (bet <= 0) {
       toast.error("Введите ставку");
       return;
     }
-    //TODO: check if money are available
+    const response = await fetch('/api/money/check', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        player_id: initData?.user?.id,
+        initData: initDataRaw,
+        bet,
+      }),
+    })
+    const data = await response.json();
+    if (!data.ok) {
+      toast.error("Недостаточно монет");
+      return;
+    }
+    toast.info("Игра началась");
     setBoard(generateBoard(rows, cols, mines));
     setDifficulty(difficulty);
-  };
+  }, [initData, initDataRaw, bet]);
 
   const handleClick = (row: number, col: number) => {
     if (
@@ -96,9 +111,11 @@ const Mines: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          player_id: initData?.user?.id,
+          game_type: 3,
+          first_user_id: initData?.user?.id,
+          second_user_id: null,
           initData: initDataRaw,
-          reward: betRef.current?.value ? -Number(betRef.current.value) : 0,
+          amount: -bet,
         }),
       })
       setGameOver(true);
@@ -139,9 +156,11 @@ const Mines: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          player_id: initData?.user?.id,
+          game_type: 3,
+          first_user_id: initData?.user?.id,
+          second_user_id: null,
           initData: initDataRaw,
-          reward: betRef.current?.value ? -Number(betRef.current.value) : 0
+          amount: bet
         }),
       })
     }
@@ -165,6 +184,15 @@ const Mines: React.FC = () => {
       }
     }
   };
+  const handleBetChange = (num: string) => {
+    setBet(Number(num))
+  };
+  const restart = () => {
+    setBoard([]);
+    setDifficulty(null);
+    setGameOver(false);
+    setBet(0);
+  }
 
   return (
     <>
@@ -186,7 +214,7 @@ const Mines: React.FC = () => {
             </button>
             <br />
             <h2>Ставка</h2>
-            <input type="number" className="mines-cost" ref={betRef} />
+            <NumberInput onChange={handleBetChange} className="mines-cost" />
           </div>
         </>
       ) : (
@@ -226,6 +254,8 @@ const Mines: React.FC = () => {
                 ))}
               </div>
             ))}
+            {gameOver ?
+              <button className="cell btn-def" onClick={restart} style={{ width: "88vw" }}>Рестарт</button> : null}
           </div>
         </>
       )}

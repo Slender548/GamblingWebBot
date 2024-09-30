@@ -1,4 +1,3 @@
-
 /* Styles for the game container */
 .board {
   position: absolute;
@@ -22,7 +21,7 @@
 
 /* Style for each cell */
 .celll {
-  background-color: #ddd;
+  background-color: #333333;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,7 +52,8 @@
 }
 
 /* Game Over and Win messages */
-.game-over, .game-won {
+.game-over,
+.game-won {
   font-size: 24px;
   text-align: center;
   margin: 20px 0;
@@ -74,7 +74,7 @@
 .difficulty-selection button {
   display: flex;
   width: 90%;
-  justify-content:center;
+  justify-content: center;
   border: 1px solid #b0b0b0;
   margin: 0.3em 0;
   border-radius: 0.8em;
@@ -117,7 +117,6 @@
   content: "😎";
 }
 
-
 .hard:active::before {
   content: "😈";
 }
@@ -130,4 +129,3 @@
   color: white;
   transform: scale(1.05);
 }
-

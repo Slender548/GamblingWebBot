@@ -1,54 +1,18 @@
-.merriweather-light {
-  font-family: "Merriweather", serif;
-  font-weight: 300;
-  font-style: normal;
-}
-
-.merriweather-regular {
-  font-family: "Merriweather", serif;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.merriweather-bold {
-  font-family: "Merriweather", serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.merriweather-black {
-  font-family: "Merriweather", serif;
-  font-weight: 900;
-  font-style: normal;
-}
-
-.merriweather-light-italic {
-  font-family: "Merriweather", serif;
-  font-weight: 300;
-  font-style: italic;
-}
-
-.merriweather-regular-italic {
-  font-family: "Merriweather", serif;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.merriweather-bold-italic {
-  font-family: "Merriweather", serif;
-  font-weight: 700;
-  font-style: italic;
-}
-
-.merriweather-black-italic {
-  font-family: "Merriweather", serif;
-  font-weight: 900;
-  font-style: italic;
-}
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
 :root {
   --btn-active: #4caf50;
   --btn-color: #45a049;
+}
+
+/* <uniquifier>: Use a unique and descriptive class name
+<weight>: Use a value from 100 to 900 */
+
+.inter {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
 }
 
 body {
@@ -58,8 +22,8 @@ body {
   position: fixed;
   bottom: 0;
   left: 0;
-  width: 99.75vw;
-  border: black solid 1px;
+  width: 100vw;
+  border-top: black solid 1px;
   border-radius: 1em 1em 0 0;
   display: flex;
   justify-content: space-evenly;
@@ -80,12 +44,23 @@ body {
   color: white;
   transition: all 0.2s;
 }
+
+.btn-def {
+  transition: all 0.2s;
+}
+
 @media (hover: none) {
   .btn-nav:active {
     font-size: 15px;
     color: rgb(36, 32, 32);
   }
   .btn-money:active {
+    transform: scale(1.05);
+  }
+  .btn-money:active {
+    transform: scale(1.05);
+  }
+  .btn-def:active {
     transform: scale(1.05);
   }
   .btn-game-enter:active {
@@ -129,6 +104,12 @@ body {
     transform: scale(1.05);
   }
   .btn-money:active {
+    transform: scale(1.1);
+  }
+  .btn-def:hover {
+    transform: scale(1.05);
+  }
+  .btn-def:active {
     transform: scale(1.1);
   }
   .btn-game-enter:hover {
@@ -192,14 +173,14 @@ body {
 }
 
 .page-title {
-  position: absolute;
+  position: fixed;
   background-color: black;
   top: 0;
   left: 0;
-  width: 99.75vw;
+  width: 100vw;
   height: 10vh;
   border-radius: 0 0 1rem 1rem;
-  border: 1px solid black;
+  border-bottom: 1px solid black;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -210,7 +191,7 @@ body {
 }
 .page-other {
   background-color: rgb(255, 255, 255);
-  width: 99.7%;
+  width: 100vw;
   margin-top: 11vh;
   height: 72vh;
   padding-top: 1rem;
@@ -623,4 +604,36 @@ body {
 
 .page-title-cell-title {
   color: #b800fb;
+}
+
+.top-winners {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.top-winners.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.top-winners-inner {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  position: relative;
+}
+.top-winners-inner .close-btn {
+  position: relative;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
 }

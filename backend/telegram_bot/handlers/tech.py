@@ -2,10 +2,10 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 
-from telegram_bot.keyboards import get_tech_keyboard, get_tech_sure_keyboard, get_home_keyboard
+from telegram_bot.keyboards import get_tech_keyboard, get_tech_sure_keyboard, get_home_keyboard, get_close_tech_keyboard as get_sure_close_tech_keyboard, get_move_tech_keyboard as get_sure_move_tech_keyboard
 from telegram_bot.states import States
 
-from tech import start_works
+from tech import start_works, end_tech_works, change_date_tech_works
 
 from datetime import datetime
 
@@ -24,7 +24,6 @@ async def tech_works_enter(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         "Введите время и дату окончания технических работ по часовому поясу UTC(0+) в формате: {день:месяц:год.час:минута:секунда}. Пример: 30:09:2024.10:20:00",reply_markup=get_home_keyboard()
     )
-
 
 @router.message(States.Tech)
 async def tech_works_check(message: Message, state: FSMContext):
@@ -63,3 +62,58 @@ async def tech_works_confirm(callback: CallbackQuery):
         await callback.message.edit_text(f"Вы начали технические работы, которые закончатся {text} по часовому поясу 0+", reply_markup=get_home_keyboard())
     else:
         await callback.message.edit_text("Невозможно начать работы.", reply_markup=get_home_keyboard())
+
+
+@router.callback_query(F.data == "EndTechWorks")
+async def tech_works_end(callback: CallbackQuery):
+    await callback.message.edit_text(text="Вы точно хотите закончить технические работы прям сейчас?", reply_markup=get_sure_close_tech_keyboard())
+
+@router.callback_query(F.data == "SureEndTechWorks")
+async def tech_works_end_confirm(callback: CallbackQuery):
+    if end_tech_works():
+        await callback.message.edit_text(text="Вы успешно закончили технические работы.", reply_markup=get_home_keyboard())
+    else:
+        await callback.message.edit_text(text="Произошла ошибка.", reply_markup=get_home_keyboard())
+
+@router.callback_query(F.data == "MoveTechWorks")
+async def tech_works_move(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "Введите новую дату и время окончания технических работ в формате: {день:месяц:год.час:минута:секунда}. Пример: 30:09:2024.10:20:00",
+        reply_markup=get_home_keyboard()
+    )
+    await state.set_state(States.MoveTechWorks)
+
+
+@router.message(States.MoveTechWorks)
+async def tech_works_move_check(message: Message, state: FSMContext):
+    try:
+        tech_works_date = message.text.split(".")
+        if len(tech_works_date) != 2:
+            await message.answer("Неверный формат. пример: 30:09:2024.10:20:00")
+            return
+        date = tech_works_date[0].split(":")
+        time = tech_works_date[1].split(":")
+        if len(date) != 3 or len(time) != 3:
+            await message.answer("Неверный формат. пример: 30:09:2024.10:20:00")
+            return
+        day, month, year = map(int, date)
+        hour, minute, second = map(int, time)
+        date_time = datetime(year, month, day, hour, minute, second)
+        now = datetime.utcnow()
+        if date_time < now:
+            await message.answer(
+                f"Дата не может быть раньше, чем сейчас. пример: 30:09:2024.10:20:00. Сейчас: {now.strftime("%d:%m:%Y.%H:%M:%S")}"
+            )
+            return
+    except ValueError:
+        await message.answer("Неверный формат. пример: 30:09:2024.10:20:00")
+        return
+    await message.answer(f"Вы выбрали: {message.text} по часовому поясу UTC (+0)", reply_markup=get_sure_move_tech_keyboard(message.text))
+
+@router.callback_query(F.data.startswith("SureMoveTechWorks_"))
+async def sure_move_tech_works(callback: CallbackQuery, state: FSMContext):
+    _, date = callback.data.split("_")
+    if change_date_tech_works(date):
+        await callback.message.edit_text(text="Вы успешно изменили дату технических работ.", reply_markup=get_home_keyboard())
+    else:
+        await callback.message.edit_text(text="Произошла ошибка.", reply_markup=get_home_keyboard())

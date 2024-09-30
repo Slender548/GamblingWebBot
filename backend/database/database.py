@@ -1,11 +1,208 @@
-from typing import List
-from sqlalchemy import update, delete, select
-import asyncio
+from typing import List, Tuple
+import aiohttp
+from bs4 import BeautifulSoup
+from sqlalchemy import update, delete, select, insert
 from .models import *
 
 from uuid import uuid4
 from pytz import timezone, utc
 
+async def insert_lottery_transaction(user_id: int, multiplier: float, amount: float | int) -> None:
+    """
+    Insert lottery transaction
+
+    Args:
+        user_id (int): User id
+        multiplier (float): Multiplier
+        amount (float): Amount
+    """
+    new_id = str(uuid4())
+    async with new_session() as session:
+            if multiplier:
+                got = (amount * multiplier) - amount
+                await add_user_money(user_id, got)
+                await session.execute(
+                insert(LotteryTransactions)
+                .values(
+                    transaction_id=new_id,
+                    telegram_id=user_id,
+                    multiplier=multiplier,
+                    amount=amount,
+                    created_at=datetime.utcnow(),
+                )
+            )
+            else:
+                await minus_user_money(user_id, amount)
+
+async def clear_game_sessions():
+    """
+    Clear all game sessions
+    """
+    async with new_session() as session:
+            statement = update(Users).values(last_visit_to_bot = datetime.utcnow()-timedelta(hours=5), bonuses_to_bot = 3)
+            await session.execute(statement)
+
+async def get_username(user_id: int) -> str:
+    """
+    Get username by user_id
+
+    Args:
+        user_id (int): User id
+
+    Returns:
+        str: Username
+    """
+    async with new_session() as session:
+        query = select(Users.username).where(Users.telegram_id == user_id)
+        result = await session.execute(query)
+        username = result.scalar()
+        return username
+
+async def invest_game_money(user_id: int, amount: float) -> bool:
+    """
+    Minus money from user's balance and add to game's balance
+
+    Args:
+        user_id (int): User id
+        amount (float): Amount of money
+
+    Returns:
+        bool: True if money was added successfully, False otherwise
+    """
+    async with new_session() as session:
+            statement = update(Users).where(
+                Users.telegram_id == user_id).values(
+                    money_balance=Users.money_balance + amount)
+            result = await session.execute(statement)
+            if result.rowcount > 0:
+                #TODO
+                # statement = update(Games).where(
+                #     Games.id == 1).values(
+                #         balance=Games.balance + amount)
+                # await session.execute(statement)
+                return True  # User found and updated successfully
+            else:
+                return False  # User not found
+
+async def get_lottery_transactions_sum() -> float:
+    """
+    Get sum of all lottery transactions
+
+    Returns:
+        float: Sum of all lottery transactions
+    """
+    async with new_session() as session:
+        query = select(db.func.sum((LotteryTransactions.amount*LotteryTransactions.multiplier)-LotteryTransactions.amount)).select_from(LotteryTransactions)
+        result = await session.execute(query)
+        total = result.scalar()
+        return total
+
+async def get_top_lottery_transactions() -> List[Tuple[str, float, int]]:
+    """
+    Get top lottery transactions
+
+    Returns:
+        List[Tuple[str, float, int]]: List of tuples with username, multiplier and bet
+    """
+    async with new_session() as session:
+        query = select(LotteryTransactions.telegram_id, LotteryTransactions.multiplier, LotteryTransactions.amount).order_by(LotteryTransactions.amount.desc()).limit(10)
+        result = await session.execute(query)
+        rows = result.all()
+        top_transactions = [(await get_username(user_id), multiplier, amount) for user_id, multiplier, amount in rows]
+    return top_transactions
+
+
+async def add_user_wallet(telegram_id: str | int, wallet_address: str) -> bool:
+    """
+    Adds wallet to user
+
+    Args:
+        telegram_id (str): Telegram ID of the user
+        wallet_address (str): The wallet address to add
+
+    Returns:
+        bool: True if wallet was added successfully, False otherwise
+    """
+    async with new_session() as session:
+            statement = update(Users).where(
+                Users.telegram_id == telegram_id).values(
+                    wallet_address=wallet_address)
+            result = await session.execute(statement)
+            if result.rowcount > 0:
+                return True  # User found and updated successfully
+            else:
+                return False  # User not found
+
+
+async def remove_user_wallet(telegram_id: str | int) -> bool:
+    """
+    Removes wallet from user
+
+    Args:
+        telegram_id (str): Telegram ID of the user
+
+    Returns:
+        bool: True if wallet was removed successfully, False otherwise
+    """
+    async with new_session() as session:
+            statement = update(Users).where(Users.telegram_id == telegram_id).values(wallet_address=None)
+            result = await session.execute(statement)
+            if result.rowcount > 0:
+                return True
+            else:
+                return False
+
+async def get_referral_count(user_id: int) -> int:
+    """
+    Get count of referrals of certain user
+
+    Args:
+        user_id (int): User id
+
+    Returns:
+        int: Count of referrals
+    """
+    async with new_session() as session:
+        query = select(db.func.count()).select_from(Referrals).where(Referrals.referrer_id == user_id)
+        result = await session.execute(query)
+        count = result.scalar()
+        return count
+
+async def take_referral_reward(user_id: int) -> float:
+    """
+    Take all referral rewards
+
+    Args:
+        user_id (int): User id
+
+    Returns:
+        float: Amount of reward
+    """
+    async with new_session() as session:
+        query = select(db.func.sum(Referrals.bonus)).select_from(Referrals).where(Referrals.referrer_id == user_id)
+        result = await session.execute(query)
+        count = result.scalar()
+        if count is None:
+            count = 0
+        query = update(Referrals).where(Referrals.referrer_id == user_id).values(bonus=0)
+        await session.execute(query)
+        return count
+
+async def get_referral_reward(user_id: int) -> float:
+    """
+    Get amount of reward for every of referal
+
+    Args:
+        user_id (int): User id
+
+    Returns:
+        float: Amount of reward
+    """
+    async with new_session() as session:
+        query = select(db.func.sum(Referrals.bonus)).select_from(Referrals).where(Referrals.referrer_id == user_id)
+        result = await session.execute(query)
+        reward = result.scalar()
+        return reward
 
 async def select_users():
     """
@@ -111,7 +308,6 @@ async def clear_user(telegram_id: str | int) -> bool:
     """
     logger.info(f"Пользователь {telegram_id} был удален")
     async with new_session() as session:
-        async with session.begin():
             statement = delete(Users).where(Users.telegram_id == telegram_id)
             result = await session.execute(statement)
             return result.rowcount > 0
@@ -134,7 +330,6 @@ async def add_user_money(telegram_id: str, money: int) -> bool:
     """
     logger.info(f"На баланс пользователя {telegram_id} было добавлено {money} монет")
     async with new_session() as session:
-        async with session.begin():
             statement = update(Users).where(
                 Users.telegram_id == telegram_id).values(
                     money_balance=Users.money_balance + money)
@@ -165,7 +360,6 @@ async def subtract_user_money(telegram_id: str, money: int) -> bool:
     """
     logger.info(f"С баланса пользователя {telegram_id} было вычтено {money} монет")
     async with new_session() as session:
-        async with session.begin():
             statement = update(Users).where(
                 Users.telegram_id == telegram_id).values(
                     money_balance=Users.money_balance - money)
@@ -187,7 +381,6 @@ async def delete_user(telegram_id: str) -> bool:
     """
     logger.info(f"Удалён пользователь: {telegram_id}")
     async with new_session() as session:
-        async with session.begin():
             statement = delete(Users).where(Users.telegram_id == telegram_id)
             result = await session.execute(statement)
             return result.rowcount > 0  # True if deletion was successful, False otherwise.
@@ -266,18 +459,20 @@ async def create_transaction(user_id: str, amount: int, transaction_type: int) -
             return False
 
 
-async def create_bet(user_id: int, amount: int, shift_days: int) -> bool:
+async def create_bet(user_id: int, coin: str, amount: int, shift_hours: int, way: int) -> bool:
     logger.info(
-        f"Сделана ставка: Пользователь: {user_id}, Сумма: {amount}, На время: {shift_days} д вперёд"
+        f"Сделана ставка: Пользователь: {user_id}, Сумма: {amount}, На время: {shift_hours} д вперёд"
     )
     async with new_session() as session:
         try:
             created_at = datetime.utcnow()
-            supposed_at = created_at + timedelta(hours=shift_days)
+            supposed_at = created_at + timedelta(hours=int(shift_hours[:-1]))
+            start_value = ... #TODO
             model = Bets(user_id=user_id,
                          amount=amount,
-                         created_at=created_at,
-                         supposed_at=supposed_at)
+                         coin=coin,
+                         supposed_at=supposed_at,
+                         start_value=start_value)
             session.add(model)
             await session.commit()
             return True
@@ -293,11 +488,37 @@ async def get_bets(user_id: int) -> List[Bets]:
         bets = result.scalars().fetchall()
         return bets
 
+async def minus_user_money(telegram_id: str | int, money: int) -> bool:
+    """
+    Minus a specified amount of money from a user's balance.
+
+    Args:
+        telegram_id (str): The Telegram ID of the user.
+        money (int): The amount of money to minus from the user's balance.
+
+    Returns:
+        bool: True if the user was found and their balance was updated successfully, False otherwise.
+
+    Example:
+        >>> await minus_user_money("123456789", 100)  # Minus 100 units of money from user with Telegram ID "123456789"
+    True
+    """
+    logger.info(f"С баланса пользователя {telegram_id} было вычтено {money} монет")
+    async with new_session() as session:
+            statement = update(Users).where(
+                Users.telegram_id == telegram_id).values(
+                    money_balance=Users.money_balance - money)
+            result = await session.execute(statement)
+            if result.rowcount > 0:
+                return True  # User found and updated successfully
+            else:
+                return False  # User not found
 
 async def mark_finished_game(game_type: int,
                              amount: int,
                              first_user_id: int,
-                             second_user_id: int | None = None) -> bool:
+                             second_user_id: int | None = None,
+                             game_hash: str | None = None) -> bool:
     """
         Create finished game model and add it to database
     """
@@ -309,8 +530,14 @@ async def mark_finished_game(game_type: int,
             model = FinishedGame(game_type=game_type,
                                  amount=amount,
                                  first_user_id=first_user_id,
-                                 second_user_id=second_user_id)
+                                 second_user_id=second_user_id,
+                                 game_hash=game_hash)
             session.add(model)
+            if game_type > 2:
+                if amount > 0:
+                    await add_user_money(first_user_id, amount)
+                elif amount < 0:
+                    await minus_user_money(first_user_id, -amount)
             await session.commit()
             return True
         except Exception as e:
@@ -334,7 +561,7 @@ async def get_count_users() -> int:
         Get count of all users
     """
     async with new_session() as session:
-        query = select(db.func.count()).select_from(Users.user_id)
+        query = select(db.func.count()).select_from(Users)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -370,6 +597,51 @@ async def edit_money_balance(telegram_id: str | int,
         await session.commit()
         return True
 
+async def add_user_money_balance(telegram_id: str | int,
+                                 money_balance: float | int):
+    logger.info(
+        f"На баланс пользователя {telegram_id} было добавлено {money_balance} монет"
+    )
+    async with new_session() as session:
+        query = select(Users).where(Users.telegram_id == telegram_id)
+        result = await session.execute(query)
+        user = result.scalar()
+        user.money_balance += money_balance
+        await update_referrers_balance(telegram_id, money_balance*0.025)
+        await session.commit()
+        return True
+
+
+async def update_referrers_balance(referred_telegram_id: str, bonus_amount: float):
+    """
+    Recursively updates the balance for all referrers of a referred user.
+    
+    Args:
+        referred_telegram_id (str): Telegram ID of the referred user.
+        bonus_amount (float): The amount to add to referrers' balances.
+    """
+    async with new_session() as session:
+        if bonus_amount < 5:
+            return
+        # Find the referral relationship where the referred user matches
+        query = select(Referrals).where(Referrals.referrer_id == referred_telegram_id, Referrals.status == True)
+        result = await session.execute(query)
+        referral = result.scalar()
+        
+        # If no referral relationship exists, exit the recursion
+        if not referral:
+            return
+        
+        # Find the referrer (the user who referred the current user)
+        referral.bonus += bonus_amount
+        query = select(Referrals).where(Referrals.referred_id == referral.referrer_id)
+        result = await session.execute(query)
+        referrer = result.scalar()
+        if referrer:
+            # Recursively update the balance of the next referrer up the chain
+            await update_referrers_balance(referrer.referred_id, bonus_amount*0.025)
+
+        return True
 
 async def edit_dollar_balance(telegram_id: str | int,
                               dollar_balance: float | int):
@@ -391,7 +663,7 @@ async def get_count_transactions() -> int:
     """
     async with new_session() as session:
         query = select(db.func.count()).select_from(
-            Transactions.transaction_id)
+            Transactions)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -408,11 +680,45 @@ async def get_transactions(page: int = 1) -> List[Transactions]:
             List[Transactions]: List of transactions
     """
     async with new_session() as session:
-        query = select(Transactions).offset((page - 1) * 10).limit(10)
+        query = select(Transactions).offset((page - 0) * 10).limit(10)
         result = await session.execute(query)
         transactions = result.scalars().all()
         return transactions
 
+
+async def get_game_params(telegram_id: str | int) -> Tuple[int, bool, bool, datetime]:
+    """
+        Get game params (money balance and available bonus)
+
+        Args:
+            telegram_id (str | int): Telegram id
+
+        Returns:
+            tuple: Money balance and available bonus
+    """
+    async with new_session() as session:
+        query = select(
+            Users.money_balance, Users.bonuses_to_bot > 0,
+            (Users.last_visit_to_bot < datetime.utcnow() - timedelta(hours=4)), Users.last_visit_to_bot).where(Users.telegram_id == telegram_id)
+        result = await session.execute(query)
+        user = result.fetchone()
+        return user
+
+async def get_user_transactions(user_id: int) -> List[Transactions]:
+    """
+        Get list of user transactions
+
+        Args:
+            user_id (int): User id
+
+        Returns:
+            List[Transactions]: List of transactions
+    """
+    async with new_session() as session:
+        query = select(Transactions).where(Transactions.telegram_id == user_id)
+        result = await session.execute(query)
+        transactions = result.scalars().all()
+        return transactions
 
 async def get_transaction(transaction_id: int):
     async with new_session() as session:
@@ -440,7 +746,7 @@ async def get_count_referrals() -> int:
         Get count of all referalls
     """
     async with new_session() as session:
-        query = select(db.func.count()).select_from(Referrals.referral_id)
+        query = select(db.func.count()).select_from(Referrals)
         result = await session.execute(query)
         count = result.scalar()
         return count
@@ -542,3 +848,44 @@ async def catch_sum():
         result = await session.execute(query)
         sum = result.scalar()
         print(sum)
+
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+async def mark_guess_games():
+    async with aiohttp.ClientSession(
+        headers={
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        }
+    ) as session:
+        html = await fetch(session, "https://coinmarketcap.com")
+        soup = BeautifulSoup(html, "html.parser")
+        table = soup.find("tbody")
+        trs = table.find_all("tr", limit=20)
+        coins = []
+        for tr in trs:
+            tds = tr.find_all("td")
+            price = tds[3].get_text()
+            value, _ = tds[2].get_text(" ", strip=True).rsplit(" ", maxsplit=1)
+            coins.append({"name": value, "price": price})
+    async with new_session() as session:
+        # WHERE bets.supposed_at <= datetime.utcnow()
+        # MAKE add_user_money(user_id, amount) or minus_user_money(user_id, amount)
+        # DEPENDS on bets.way
+        # IF coints[bets.coin]["prize"] < bets.start_value 
+        query = select(Bets).where(Bets.supposed_at <= datetime.utcnow())
+        result = await session.execute(query)
+        bets = result.scalars().all()
+        for bet in bets:
+            if coins[bet.coin]["prize"] < bet.start_value:
+                #TODO:check way
+                if bet.way == -1:
+                    await add_user_money(bet.user_id, bet.amount)
+                else:
+                    await minus_user_money(bet.user_id, bet.amount)
+            else:
+                if bet.way == -1:
+                    await minus_user_money(bet.user_id, bet.amount)
+                else:
+                    await add_user_money(bet.user_id, bet.amount)

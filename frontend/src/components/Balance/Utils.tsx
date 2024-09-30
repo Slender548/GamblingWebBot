@@ -1,24 +1,18 @@
+import axios from "axios";
 /**
 * Fetches player data from the API and updates the dollar and money balances.
 *
-* @return {Promise<number[]>}
+* @return {Promise<number>}
 */
-const fetchData = async (initDataRaw: string | undefined, userId: number | undefined): Promise<number[]> => {
-    const response = await fetch("/api/player/get", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            initData: initDataRaw,
-            player_id: userId,
-        }),
+const fetchData = async (initDataRaw: string | undefined, userId: number | undefined): Promise<number> => {
+    const { data } = await axios.post("/api/player/get", {
+        initData: initDataRaw,
+        player_id: userId,
     });
-    const data = await response.json();
     if (data.ok) {
-        return [data.player.dollar_balance, data.player.money_balance]
+        return data.player.money_balance;
     } else {
-        return [-1, -1]
+        return -1;
     }
 };
 
@@ -37,17 +31,10 @@ interface Transaction {
 * @return {Promise<Transaction[]>}
 */
 const fetchHistory = async (initDataRaw: string | undefined, userId: number | undefined): Promise<Transaction[]> => {
-    const response = await fetch("/api/transactions/get", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            initData: initDataRaw,
-            player_id: userId,
-        }),
+    const { data } = await axios.post("/api/transactions/get", {
+        initData: initDataRaw,
+        player_id: userId,
     });
-    const data = await response.json();
     if (data.ok) {
         return data.data;
     } else {
@@ -55,6 +42,18 @@ const fetchHistory = async (initDataRaw: string | undefined, userId: number | un
     }
 };
 
+const fetchTonBalance = async (initDataRaw: string | undefined, userId: number | undefined): Promise<number> => {
+    const { data } = await axios.post("/api/wallet/get_balance", {
+        initData: initDataRaw,
+        player_id: userId,
+    });
+    if (data.ok) {
+        return data.balance
+    } else {
+        return -1
+    }
+}
 
 
-export { fetchData, fetchHistory };
+
+export { fetchData, fetchHistory, fetchTonBalance };

@@ -11,7 +11,7 @@ import blackChip from "../../../assets/images/chips/black-chip.png";
 import cyanChip from "../../../assets/images/chips/cyan-chip.png";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
+import getLaunchParams from "../../RetrieveLaunchParams";
 
 const API = {
   getRandomBet: async (): Promise<string> => {
@@ -57,13 +57,24 @@ const chipsMap: Record<string, Chip> = {
 const calcTotalBet = (bets: Record<string, Bet>): number =>
   Object.entries(bets).reduce((acc, [, value]) => acc + value.number, 0);
 
-const RouletteGame = () => {
+function formatLargeNumber(num: number) {
+  const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
+  let i = 0;
+  while (num >= 1000 && i < suffixes.length - 1) {
+    num /= 1000;
+    i++;
+  }
+
+  return num.toFixed(2) + suffixes[i];
+}
+
+const RouletteGame: React.FC = () => {
   const [bets, setBets] = useState<Record<string, Bet>>({});
   const [betHistory, setBetHistory] = useState<BetHistory[]>([]);
   const [activeChip, setActiveChip] = useState<string>(
     Object.keys(chipsMap)[0]
   );
-  const { initData, initDataRaw } = retrieveLaunchParams();
+  const { initDataRaw, initData } = getLaunchParams();
 
   const [isRouletteWheelSpinning, setIsRouletteWheelSpinning] =
     useState<boolean>(false);
@@ -105,7 +116,23 @@ const RouletteGame = () => {
     prepare();
   }, [isRouletteWheelSpinning]);
 
-  const handleDoSpin = () => {
+  const handleDoSpin = async () => {
+    const response = await fetch('/api/money/check', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        initData: initDataRaw,
+        player_id: initData?.user?.id,
+        bet: totalBet,
+      }),
+    })
+    const data = await response.json();
+    if (!data.ok) {
+      toast.error("Недостаточно монет");
+      return;
+    }
     setIsRouletteWheelSpinning(true);
   };
 
@@ -310,16 +337,25 @@ const RouletteGame = () => {
       }
     });
     if (totalBet > winAmount) {
-      toast.warn(`Вы проиграли ${totalBet - winAmount}$`);
+      toast.warn(`Вы проиграли ${formatLargeNumber(totalBet - winAmount)} ${(totalBet - winAmount) % 10 === 1 && (totalBet - winAmount) % 100 !== 11
+        ? "монета"
+        : 2 <= (totalBet - winAmount) % 10 &&
+          (totalBet - winAmount) % 10 <= 4 &&
+          !(12 <= (totalBet - winAmount) % 100 && (totalBet - winAmount) % 100 <= 14)
+          ? "монеты"
+          : "монет"
+        } `);
       fetch('/api/game/finish', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          player_id: initData?.user?.id,
+          first_user_id: initData?.user?.id,
+          second_user_id: null,
           initData: initDataRaw,
-          reward: totalBet - winAmount
+          amount: -(totalBet - winAmount),
+          game_type: 6
         }),
       })
     } else if (totalBet === winAmount) {
@@ -330,22 +366,32 @@ const RouletteGame = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          player_id: initData?.user?.id,
+          first_user_id: initData?.user?.id,
+          second_user_id: null,
           initData: initDataRaw,
-          reward: 0
+          amount: 0,
+          game_type: 6
         }),
       })
     } else if (totalBet < winAmount) {
-      toast.success(`Вы выиграли ${winAmount - totalBet}$`);
+      toast.success(`Вы выиграли ${formatLargeNumber(winAmount - totalBet)} ${(winAmount - totalBet) % 10 === 1 && (winAmount - totalBet) % 100 !== 11
+        ? "монета"
+        : 2 <= (winAmount - totalBet) % 10 &&
+          (winAmount - totalBet) % 10 <= 4 &&
+          !(12 <= (winAmount - totalBet) % 100 && (winAmount - totalBet) % 100 <= 14)
+          ? "монеты"
+          : "монет"}`);
       fetch('/api/game/finish', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          player_id: initData?.user?.id,
+          first_user_id: initData?.user?.id,
+          second_user_id: null,
           initData: initDataRaw,
-          reward: totalBet - winAmount
+          amount: winAmount - totalBet,
+          game_type: 6
         }),
       });
     }
@@ -439,16 +485,20 @@ const RouletteGame = () => {
   };
 
   const totalBet = calcTotalBet(bets);
-
+  const totalBetEnding: string =
+    totalBet % 10 === 1 && totalBet % 100 !== 11
+      ? "монета"
+      : 2 <= totalBet % 10 &&
+        totalBet % 10 <= 4 &&
+        !(12 <= totalBet % 100 && totalBet % 100 <= 14)
+        ? "монеты"
+        : "монет";
   return (
     <>
       <div className="page-title">
         <div className="page-title-cell">
-          <b className="page-title-cell-title">Баланс: </b>2314$
-        </div>
-        <div className="page-title-cell">
           <b className="page-title-cell-title">Поставлено:</b>
-          {totalBet}
+          {formatLargeNumber(totalBet)} {totalBetEnding}
         </div>
       </div>
       <div
@@ -495,7 +545,7 @@ const RouletteGame = () => {
             <button
               type="button"
               disabled={isRouletteWheelSpinning}
-              onClick={handleDoSpin}
+              onClick={() => handleDoSpin()}
             >
               Крутить
             </button>

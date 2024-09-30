@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import "./GuessGame.css";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import NumberInput from "../../NumberInput";
 
 interface Coin {
     name: string;
@@ -11,11 +13,11 @@ interface Coin {
 }
 
 const GuessPage: React.FC = () => {
-
+    const { initDataRaw, initData } = getLaunchParams();
     const [coins, setCoins] = useState<Coin[]>([])
     const [showClass, setShowClass] = useState<boolean>(false);
     const [showPopup, setShowPopup] = useState<boolean>(false);
-    const betRef = useRef<HTMLInputElement>(null);
+    const [bet, setBet] = useState<number>(0);
     const [curCoin, setCurCoin] = useState<number>(-1);
 
     const [time, setTime] = useState<string>("")
@@ -44,46 +46,61 @@ const GuessPage: React.FC = () => {
                 }
             } catch {
                 toast.error("Ошибка в получении данных. Перезагрузите страницу");
-                const newCoins = [
-                    { name: 'Bitcoin', symbol: 'BTC', price: '$58,574.70' },
-                    { name: 'Ethereum', symbol: 'ETH', price: '$2,519.24' },
-                    { name: 'Tether', symbol: 'USDT', price: '$0.9999' },
-                    { name: 'BNB', symbol: 'BNB', price: '$522.22' },
-                    { name: 'Solana', symbol: 'SOL', price: '$133.07' },
-                    { name: 'USDC', symbol: 'USDC', price: '$1.00' },
-                    { name: 'XRP', symbol: 'XRP', price: '$0.5578' },
-                    { name: 'Dogecoin', symbol: 'DOGE', price: '$0.09768' },
-                    { name: 'TRON', symbol: 'TRX', price: '$0.1564' },
-                    { name: 'Toncoin', symbol: 'TON', price: '$5.15' },
-                    { name: 'Cardano', symbol: 'ADA', price: '$0.33' },
-                    { name: 'Avalanche', symbol: 'AVAX', price: '$22.16' },
-                    { name: 'Shiba Inu', symbol: 'SHIB', price: '$0.00001347' },
-                    { name: 'Chainlink', symbol: 'LINK', price: '$10.69' },
-                    { name: 'Bitcoin Cash', symbol: 'BCH', price: '$321.48' },
-                    { name: 'Polkadot', symbol: 'DOT', price: '$4.17' },
-                    { name: 'UNUS SED LEO', symbol: 'LEO', price: '$5.83' },
-                    { name: 'Dai', symbol: 'DAI', price: '$1.00' },
-                    { name: 'Litecoin', symbol: 'LTC', price: '$64.57' },
-                    { name: 'NEAR Protocol', symbol: 'NEAR', price: '$3.97' },
-                ];
-                setCoins(newCoins);
+
             }
         }
         updateCoins();
     }, [])
 
-    const bet = (coin_id: number) => {
+    const toBet = (coin_id: number) => {
         setCurCoin(coin_id);
         openBetPopup();
     }
 
-    const createBet = () => {
-        const bet = betRef.current?.value
+    const createBet = async () => {
         if (!bet || !time || way === null) {
             toast.error("Необходимо заполнить все поля")
             return
         }
-        //TODO:
+
+        const res = await fetch('/api/money/check', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                initData: initDataRaw,
+                player_id: initData?.user?.id,
+                bet,
+            }),
+        })
+        const dt = await res.json();
+        if (!dt.ok) {
+            toast.error("Недостаточно монет");
+            return;
+        }
+
+        const response = await fetch('/api/guess/bet', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                initData: initDataRaw,
+                coin_name: coins[curCoin].name,
+                player_id: initData?.user?.id,
+                bet,
+                time,
+                way,
+            }),
+        })
+        const data = await response.json();
+        if (data.ok) {
+            toast.success("Ставка сделана")
+        } else {
+            toast.error(data.msg);
+            return;
+        }
         closeBetPopup();
     }
 
@@ -104,6 +121,9 @@ const GuessPage: React.FC = () => {
         setWay(null);
     }
 
+    const handleBetChange = (num: string) => {
+        setBet(Number(num));
+    }
 
     const showBetPopup = (): JSX.Element => {
         return (
@@ -112,7 +132,7 @@ const GuessPage: React.FC = () => {
                     <h2>Угадать</h2>
                     <h2>{coins[curCoin].name}</h2>
                     <label>Ставка</label>
-                    <input type="number" ref={betRef} name="game-name" />
+                    <NumberInput value={bet.toString()} onChange={handleBetChange} />
                     <form>
                         <ul id="filter1" className="filter-switch inline-flex items-center relative h-10 p-1 space-x-1 bg-gray-200 rounded-md font-semibold text-blue-600 my-4">
                             <li className="filter-switch-item flex relative h-8 bg-gray-300x">
@@ -184,7 +204,7 @@ const GuessPage: React.FC = () => {
                                 <td style={{ textAlign: "center" }}><img src={`${coin.name.toLowerCase()}-${coin.symbol.toLowerCase()}-logo.svg`} width={"40px"} height={"40px"} /></td>
                                 <td className="coin-name">{coin.name} <p className="coin-symbol">{coin.symbol}</p></td>
                                 <td className="coin-price" style={{ textAlign: "center" }}>{coin.price}</td>
-                                <td><button className="coin-btn" onClick={() => bet(index)}>Поставить</button></td>
+                                <td><button className="coin-btn" onClick={() => toBet(index)}>Поставить</button></td>
                             </tr>
                         ))}
                         <tr style={{ visibility: "hidden" }}>

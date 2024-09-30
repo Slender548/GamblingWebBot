@@ -4,6 +4,16 @@ interface LotteryData {
     endTime: string
 }
 
+export interface Winner {
+    username: string,
+    bet: number,
+    multiplier: number
+}
+
+interface WinnersData {
+    winners: Winner[]
+}
+
 /**
  * Fetches the current lottery data and updates the state
  * with the current lottery object and its end time.
@@ -12,7 +22,7 @@ interface LotteryData {
  */
 const fetchLottery = async (initDataRaw: string | undefined): Promise<LotteryData> => {
     const response = await fetch("/api/lottery", {
-        method: "GET",
+        method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
@@ -28,4 +38,22 @@ const fetchLottery = async (initDataRaw: string | undefined): Promise<LotteryDat
     }
 };
 
-export { fetchLottery };
+const fetchTopWinners = async (initDataRaw: string | undefined): Promise<WinnersData> => {
+    const response = await fetch("/api/lottery/topwinners", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            initData: initDataRaw,
+        }),
+    });
+    const data = await response.json();
+    if (data.ok) {
+        return { winners: data.winners }
+    } else {
+        return { winners: [] }
+    }
+};
+
+export { fetchLottery, fetchTopWinners };

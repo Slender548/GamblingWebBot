@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { useTonConnectUI } from "@tonconnect/ui-react";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
-import { fetchData, fetchHistory } from "./Utils";
+import { useEffect, useState } from "react";
+import { TonConnectError, useTonAddress, useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
+import { fetchData, fetchHistory, fetchTonBalance } from "./Utils";
 import { toast } from "react-toastify";
 import NavBar from "../NavBar";
+import getLaunchParams from "../RetrieveLaunchParams";
+import NumberInput from "../NumberInput";
+import axios from "axios";
 
 interface Transaction {
   id: string;
@@ -14,32 +16,92 @@ interface Transaction {
   confirmed: boolean;
 }
 
+function toNano(nano: string): string {
+  return String(Number(nano) / 1000000000);
+}
+
+function formatLargeNumber(num: number) {
+  const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
+  let i = 0;
+  while (num >= 1000 && i < suffixes.length - 1) {
+    num /= 1000;
+    i++;
+  }
+
+  return num.toFixed(2) + suffixes[i];
+}
+
 /**
  * A functional component that displays the user's balance and provides options to withdraw, deposit, and view transaction history.
  *
  * @return {JSX.Element} The JSX element representing the balance page.
  */
-export default function Balance(): JSX.Element {
-  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
-  const [withdrawPopup, setWithdrawPopup] = useState<boolean>(false);
+const Balance: React.FC = (): JSX.Element => {
+  const { initDataRaw, initData } = getLaunchParams();
   const [depositPopup, setDepositPopup] = useState<boolean>(false);
   const [historyPopup, setHistoryPopup] = useState<boolean>(false);
-  const [dollarBalance, setDollarBalance] = useState<number>(0);
   const [moneyBalance, setMoneyBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const withdrawAmount = useRef<HTMLInputElement | null>(null);
-  const depositAmount = useRef<HTMLInputElement | null>(null);
+  const [tonBalance, setTonBalance] = useState<number>(0);
+  const tonWallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
+  const [walletSet, setWalletSet] = useState<boolean>(false);
+  const tonAddress = useTonAddress(false);
+  const [depositNumber, setDeposit] = useState(0);
+
+
   useEffect(() => {
-    fetchData(initDataRaw, initData?.user?.id).then((balances) => {
-      if (balances[0] === -1 && balances[1] === -1) {
-        toast.error("Не удалось получить данные. Перезагрузите страницу");
-      } else {
-        setDollarBalance(balances[0]);
-        setMoneyBalance(balances[1]);
+    async function main() {
+      try {
+        const [balance, transactions] = await Promise.all([
+          fetchData(initDataRaw, initData?.user?.id),
+          fetchHistory(initDataRaw, initData?.user?.id),
+        ]);
+
+        if (balance === -1) {
+          toast.error("Не удалось получить данные. Перезагрузите страницу");
+        } else {
+          setMoneyBalance(balance);
+        }
+
+        setTransactions(transactions);
+      } catch (error) {
+        console.error(error);
       }
-    })
-    fetchHistory(initDataRaw, initData?.user?.id).then((transactions) => { setTransactions(transactions) });
-  }, [initData?.user?.id, initDataRaw]);
+    }
+
+    main();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (tonWallet) { fetchTonBalance(initDataRaw, initData?.user?.id).then((balance) => { if (balance == -1) { toast.error("Перепривяжите TON кошелёк") } else setTonBalance(balance); }); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tonWallet])
+
+  tonConnectUI.onStatusChange((wallet) => {
+    if (wallet) {
+      setWalletSet(true);
+    }
+  })
+
+  useEffect(() => {
+    const updateWallet = async () => {
+      const { data } = await axios.post('/api/wallet/connect', {
+        initData: initDataRaw,
+        player_id: initData?.user?.id,
+        wallet_address: tonAddress
+      });
+      if (!data.ok) {
+        toast.error(data.msg);
+      }
+
+    }
+    if (walletSet) updateWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletSet]);
+
 
   const moneyEnding: string =
     moneyBalance % 10 === 1 && moneyBalance % 100 !== 11
@@ -50,50 +112,7 @@ export default function Balance(): JSX.Element {
         ? "монеты"
         : "монет";
 
-  const showWithdrawPopup = (): JSX.Element => {
-    const closeWithdraw = () => {
-      const popup = document.getElementById("withdrawPopup");
-      popup?.classList.remove("show");
-      setTimeout(() => {
-        setWithdrawPopup(false);
-      }, 100);
-    };
 
-    const withdraw = () => {
-      //TODO
-    };
-
-    return (
-      <div className="popup" id="withdrawPopup">
-        <div className="popup-content">
-          <h2>Вывод средств</h2>
-          <label>Сумма вывода($):</label>
-          <input
-            type="number"
-            ref={withdrawAmount}
-            min="5"
-            step="0.01"
-            placeholder="Мин 5$"
-          />
-          <label>Метод вывода:</label>
-          <input
-            className="tgl tgl-skewed"
-            id="withdrawMethod"
-            type="checkbox"
-          />
-          <label className="tgl-btn" data-tg-off="SOL" data-tg-on="TON"></label>
-          <div className="popup-buttons">
-            <button className="btn-create" onClick={withdraw}>
-              Вывод
-            </button>
-            <button className="btn-cancel" onClick={closeWithdraw}>
-              Отмена
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const showDepositPopup = (): JSX.Element => {
     const closeDeposit = (): void => {
@@ -104,36 +123,71 @@ export default function Balance(): JSX.Element {
       }, 100);
     };
 
-    const deposit = (): void => {
-      //TODO:
+    const deposit = async (): Promise<void> => {
+      if (depositNumber < 0) {
+        toast.error("Неверная сумма депозита");
+        return;
+      }
+      const { data } = await axios.post('/api/wallet/deposit', {
+        amount: depositNumber,
+        initData: initDataRaw
+      });
+      if (!data.ok) {
+        toast.error("Выполнить депозит в данный момент невозможно")
+        return;
+      }
+      if (depositNumber)
+        tonConnectUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 360,
+          messages: [
+            {
+              address: data.wallet_address,
+              amount: toNano(depositNumber.toString()).toString()
+            }
+          ]
+        }).then(async () => {
+          await axios.post('/api/balance/deposit', {
+            amount: depositNumber,
+            initData: initDataRaw,
+            player_id: initData?.user?.id
+          })
+        }).catch((e: TonConnectError) => {
+          if ("USER_REJECTS_ERROR" in e) {
+            toast.error("Вы отклонили транзакцию");
+          } else if ("UNKNOWN_ERROR" in e) {
+            toast.error("Произошла неизвестная ошибка");
+          } else if ("BAD_REQUEST_ERROR" in e) {
+            toast.error("Вы ввели некорректные данные");
+          } else if ("UNKNOWN_APP_ERROR" in e) {
+            toast.error("Проблема с приложением");
+          } else if ("METHOD_NOT_SUPPORTED" in e) {
+            toast.error("Метод не поддерживается");
+          }
+        })
+      else {
+        toast.error("Не получилось совершить депозит");
+      }
+
+
       closeDeposit();
     };
 
+    const handleChangeDeposit = (newValue: string) => {
+      setDeposit(Number(newValue));
+    }
+
     return (
       <div className="popup" id="depositPopup">
-        <div className="popup-content">
+        <div className="popup-content inter">
           <h2>Депозит</h2>
-          <label>Сумма вывода($):</label>
-          <input
-            type="number"
-            ref={depositAmount}
-            min="5"
-            step="0.01"
-            placeholder="Мин 5$"
-          />
-          <label>Метод депозита:</label>
-          <input
-            className="tgl tgl-skewed"
-            id="depositMethod"
-            type="checkbox"
-          />
-          <label className="tgl-btn" data-tg-off="SOL" data-tg-on="TON"></label>
+          <label>Сумма депозита(TON):</label>
+          <NumberInput className="inter" placeholder="TON" onChange={handleChangeDeposit} />
           <div className="popup-buttons">
-            <button className="btn-create" onClick={deposit}>
-              Deposit
+            <button className="btn-create inter" onClick={deposit}>
+              Депозит
             </button>
-            <button className="btn-cancel" onClick={closeDeposit}>
-              Cancel
+            <button className="btn-cancel inter" onClick={closeDeposit}>
+              Отмена
             </button>
           </div>
         </div>
@@ -152,7 +206,7 @@ export default function Balance(): JSX.Element {
 
     return (
       <div className="popup" id="historyPopup">
-        <div className="popup-content">
+        <div className="popup-content inter">
           <h2>История транзакций</h2>
           <div className="history-content">
             <div className="cell">
@@ -160,21 +214,25 @@ export default function Balance(): JSX.Element {
               <p>2023-07-22</p>
             </div>
             <div className="cell">
-              <p>Вывод: 10 SOL</p>
-              <p>2023-07-23</p>
+              <p>Депозит: 540 TON</p>
+              <p>2023-07-22</p>
+            </div>
+            <div className="cell">
+              <p>Депозит: 20 TON</p>
+              <p>2023-07-22</p>
             </div>
             {transactions?.map((transaction) => (
               <div className="cell">
                 <p>
-                  {transaction.transaction_type}: {transaction.amount} $
+                  {transaction.transaction_type}: {transaction.amount} TON
                 </p>
-                <p>{transaction.created_at}</p>
+                <p>{new Date(transaction.created_at).toISOString().replace(/T/, ' ').replace(/\..+/, '')}</p>
               </div>
             ))}
           </div>
           <div className="popup-buttons">
-            <button className="btn-cancel" onClick={closeHistory}>
-              Close
+            <button className="btn-cancel inter" onClick={closeHistory}>
+              Закрыть
             </button>
           </div>
         </div>
@@ -182,13 +240,7 @@ export default function Balance(): JSX.Element {
     );
   };
 
-  const setShowWithdrawPopup = (): void => {
-    setWithdrawPopup(true);
-    setTimeout(() => {
-      const popup = document.getElementById("withdrawPopup");
-      if (popup) popup.classList.add("show");
-    }, 10);
-  };
+
 
   const setShowDepositPopup = (): void => {
     setDepositPopup(true);
@@ -206,30 +258,20 @@ export default function Balance(): JSX.Element {
     }, 10);
   };
 
-  const [tonConnectUI] = useTonConnectUI();
 
   return (
     <>
       <div className="page-title">
-        <div className="page-title-cell">
-          <b className="page-title-cell-title"> Монет:</b> {moneyBalance}{" "}
+        <div className="page-title-cell inter">
+          <b className="page-title-cell-title"> Монет:</b> {formatLargeNumber(moneyBalance)}{" "}
           {moneyEnding}
         </div>
-        <div className="page-title-cell">
-          <b className="page-title-cell-title"> Долларов:</b> {dollarBalance} $
-        </div>
+        {tonWallet ? (<div className="page-title-cell inter">
+          <b className="page-title-cell-title"> TON Кошёлёк:</b> {formatLargeNumber(tonBalance)} TON </div>) : (<></>)}
       </div>
       <div className="page-other">
         <button
-          className="cell btn-active"
-          onClick={() => {
-            setShowWithdrawPopup();
-          }}
-        >
-          Вывод средств
-        </button>
-        <button
-          className="cell btn-active"
+          className="cell btn-def inter"
           onClick={() => {
             setShowDepositPopup();
           }}
@@ -237,24 +279,38 @@ export default function Balance(): JSX.Element {
           Депозит средств
         </button>
         <button
-          className="cell btn-active"
+          className="cell btn-def inter"
           onClick={() => {
             setShowHistoryPopup();
           }}
         >
           История выводов и депозитов
         </button>
-        <button
-          className="cell btn-money"
-          onClick={() => tonConnectUI.openModal()}
-        >
+        {(tonWallet) ? (<button className="cell btn-money inter" onClick={async () => {
+
+          const { data } = await axios.post("/api/wallet/disconnect", {
+            player_id: initData?.user?.id,
+            initData: initDataRaw,
+          })
+
+          if (data.ok) {
+            await tonConnectUI.disconnect()
+            toast.success("Кошелёк успешно отвязан");
+          } else {
+            toast.error("Не получилось отвязать кошелёк");
+          }
+        }}>
+          Отвязать TON Кошёлёк
+        </button>) : <button className="cell btn-def inter"
+          onClick={() => tonConnectUI.openModal()}>
           Привязать TON Кошёлёк
-        </button>
+        </button>}
       </div>
-      {withdrawPopup && showWithdrawPopup()}
       {depositPopup && showDepositPopup()}
       {historyPopup && showHistoryPopup()}
       <NavBar stricted={false} />
     </>
   );
 }
+
+export default Balance;

@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 import aiohttp
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import schedule
+
 
 load_dotenv()
 
@@ -27,14 +28,15 @@ from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 
 from random import randint, choice
-from typing import Dict, List
+from typing import List
 
+from tech import is_tech_works
 from request_models import *
 from utils import *
 from database import db
 import telegram_bot
 import asyncio
-
+import lottery as ltry
 
 bot, dp = telegram_bot.get_bot()
 
@@ -56,43 +58,226 @@ cards_52: List[str] = [
 
 templates: Jinja2Templates = Jinja2Templates(directory='templates')
 
-
+wallets = []
 
 @app.post('/api/initdata/check', response_class=JSONResponse)
-async def check_init_data(request: DefaultRequest):
+async def check_init_data(request: PlayerRequest):
+    if not (await db.get_user(request.player_id)):
+        return {"msg": "Пользователь незарегистрирован", "ok": False, "status": 404}
+    if is_tech_works():
+        return {"msg": "Технические работы", "ok": False, "status": 404}
     if is_telegram(request.initData):
         logger.info(f"Данные успешно проинициализированы: {request.initData}")
-        return {"msg": "Данные инициализации корректны", "ok": True}
+        return {"msg": "Данные инициализации корректны", "ok": True, "status": 200}
     else:
         logger.warning(
             f"Кто-то пытался войти с некорректными данными: {request.initData}"
         )
-        return {"msg": "Данные инициализации некорректны", "ok": False}
+        return {"msg": "Данные инициализации некорректны", "ok": False, "status": 401}
 
-
-@app.post('/api/player/get', response_class=JSONResponse)
-async def get_player_by_id(id: str, request: DefaultRequest):
+@app.post('/api/lottery/topwinners', response_class=JSONResponse)
+async def get_top_lottery_winners(request: DefaultRequest):
     if not is_telegram(request.initData):
         logger.warning(
             f"Кто-то пытался войти с некорректными данными: {request.initData}"
         )
         return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
-    player = await db.get_user(id)
+    winners = await ltry.get_top_winners()
+    return {
+        "msg": "Топ победители лотереи получены успешно", 
+        "ok": True,
+        "status": 200,
+        "winners": winners
+    }
+
+@app.post('/api/wallet/disconnect', response_class=JSONResponse)
+async def disconnect_wallet(request: PlayerRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался отключить кошелек с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    await db.remove_user_wallet(request.player_id)
+    return {
+        "msg": "Кошелек успешно отключен",
+        "ok": True,
+        "status": 200
+    }
+
+
+@app.post('/api/wallet/connect', response_class=JSONResponse)
+async def connect_wallet(request: WalletRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался подключить кошелек с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    await db.add_user_wallet(request.player_id, request.wallet_address)
+    return {
+        "msg": "Кошелек успешно подключен",
+        "ok": True,
+        "status": 200
+    }
+
+@app.post('/api/lottery/deposit', response_class=JSONResponse)
+async def make_lottery_deposit(request: LotteryBetRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался сделать ставку в лотерею с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    await ltry.make_deposit(request.player_id, request.reward, request.bet)
+    return {
+        "msg": "Ставка успешно принята",
+        "ok": True,
+        "status": 200
+    }
+    
+
+@app.post('/api/guess/bet', response_class=JSONResponse)
+async def make_guess_bet(request: CoinBetRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался сделать ставку с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    bet = await db.create_bet(request.player_id, request.coin_name, request.bet, request.time, request.way)
+    if not bet:
+        return {"msg": "Ставка не создана", "ok": False, "status": 400}
+    return {
+        "msg": "Ставка успешно создана",
+        "ok": True,
+        "status": 201,
+    }
+    
+
+@app.post('/api/game/params/get', response_class=JSONResponse)
+async def make_game_params(request: PlayerRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался войти с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    money, *bonus, last_visit = await db.get_game_params(request.player_id)
+    return {
+        "msg": "Параметры игры получены успешно",
+        "ok": True,
+        "status": 200,
+        "params": {
+            "money": money,
+            "bonus": 1 if all(bonus) else -1,
+            "last_visit": last_visit
+        }
+    }
+
+@app.post('/api/game/add/money', response_class=JSONResponse)
+async def add_money(request: PlayerRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался добавить деньги с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    await db.add_user_money_balance(request.player_id)
+    return {
+        "msg": "Деньги успешно добавлены",
+        "ok": True,
+        "status": 200
+    }
+
+@app.post('/api/wallet/deposit', response_class=JSONResponse)
+async def get_wallet_for_deposit(request: WalletAmountRequest):
+    balances = []
+    if wallets:
+        for wallet in wallets:
+            balances.append(await get_ton_balance(wallet))
+    else:
+        return {
+            "msg": "Ошибка, кошелька нет",
+            "ok": False,
+            "status": 404
+        }
+    index = balances.index(min(balances))
+    return {
+        "msg": "Баланс успешно пополнен",
+        "ok": True,
+        "status": 200,
+        "wallet": wallets[index]
+    }
+
+@app.post('/api/game/money', response_class=JSONResponse)
+async def invest_game_money(request: AmountRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался войти с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    logger.info(f"Пользователь {request.player_id} получил в главное игре: {request.bet}")
+    await db.invest_game_money(request.player_id, request.bet)
+    return {
+        "msg": "Деньги успешно вложены",
+        "ok": True,
+        "status": 200
+    }
+        
+
+@app.post('/api/wallet/get_balance', response_class=JSONResponse)
+async def get_wallet_balance(request: PlayerRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался получить баланс с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    player = await db.get_user(request.player_id)
+    if not player:
+        return {"msg": "Пользователь не найден", "ok": False, "status": 404}
+    wallet = player.wallet_address
+    balance = await get_ton_balance(wallet)
+    logger.info(f"Баланс пользователя {request.player_id} получен: {balance}")
+    return {
+        "msg": "Баланс получен",
+        "ok": True,
+        "status": 200,
+        "balance": balance
+    }
+
+@app.post("/api/money/check", response_class=JSONResponse)
+async def check_money_amount(request: AmountRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался проверить деньги с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    player = await db.get_user(request.player_id)
+    if not player:
+        return {"msg": "Пользователь не найден", "ok": False, "status": 404}
+    logger.info(f"У пользователя: {player.money_balance}. Запрошено: {request.bet}")
+    if player.money_balance < request.bet:
+        return {"msg": "Недостаточно монет", "ok": False, "status": 402}
+    return {"msg": "Монет достаточно", "ok": True, "status": 200}
+
+
+
+@app.post('/api/player/get', response_class=JSONResponse)
+async def get_player_by_id(request: PlayerRequest):
+    if not is_telegram(request.initData):
+        logger.warning(
+            f"Кто-то пытался войти с некорректными данными: {request.initData}"
+        )
+        return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
+    player = await db.get_user(request.player_id)
     if player:
-        logger.info(f"Пользователь {id} был взят из базы данных")
+        logger.info(f"Пользователь {request.player_id} был взят из базы данных")
         return {
             "msg": "Игрок успешно найден",
             "ok": True,
             "status": 200,
             "player": {
                 "wallet_address": player.wallet_address,
-                "dollar_balance": player.dollar_balance,
-                "money_balance": player.money_balance,
-                "total_transactions": player.total_transactions
+                "money_balance": player.money_balance
             }
         }
     else:
-        logger.warning(f"Была попытка поиска пользователя под id: {id}")
+        logger.warning(f"Была попытка поиска пользователя под id: {request.player_id}")
         return {"ok": False, "status": 404, "msg": "Игрок не найден"}
 
 
@@ -135,7 +320,7 @@ async def find_out_reward(request: PlayerRequest):
         "msg": "Награда забрана",
         "ok": True,
         "status": 200,
-        "reward": reward
+        "reward": reward or 0
     }
 
 @app.post('/api/take-reward', response_class=JSONResponse)
@@ -246,7 +431,7 @@ async def get_transactions(request: PlayerRequest):
             f"Кто-то пытался войти с некорректными данными: {request.initData}"
         )
         return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
-    transactions = await db.get_transactions(request.player_id)
+    transactions = await db.get_user_transactions(request.player_id)
     return {
         "msg": "Транзакции получены",
         "ok": True,
@@ -261,10 +446,11 @@ async def create_finished_game(request: FinishedGameRequest):
         return {"msg": "Как ты сюда попал", "ok": False, "status": 401}
     game_type = request.game_type
     amount = request.amount
-    first_user_id = request.first_user_idw
+    first_user_id = request.first_user_id
     second_user_id = request.second_user_id
+    _hash = generate_room_id()
     if (await db.mark_finished_game(game_type, amount, first_user_id,
-                                    second_user_id)):
+                                    second_user_id, _hash)):
         logger.info(
             f"Игра {game_type} {f"между {first_user_id} и {second_user_id}" if second_user_id else f"от {first_user_id}"} "
             f"завершена. Сумма: {amount}"
@@ -391,7 +577,7 @@ async def get_dice_reward(room_id: str):
 
 @app.get('/api/dice/updates', response_class=JSONResponse)
 async def get_dice_updates(player_id: int, room_id: str):
-    if room_id not in blackjack_rooms:
+    if room_id not in dice_rooms:
         logger.info(f"Пользователь {player_id} запросил обновления в несуществующей комнате {room_id}")
         return {"msg": "Комната не найдена!", "ok": False, "status": 404}
     current_room: dict = dice_rooms[room_id]
@@ -417,7 +603,11 @@ async def get_dice_updates(player_id: int, room_id: str):
         }
     self_idx: int = current_room["players"].index(player_id)
     opponent_idx: int = int(not self_idx)
-    data = {
+    logger.info(f"Пользователь {player_id} успешно получил обновления в комнате {room_id}")
+    return {
+        "msg": "Обновления успешно получены.",
+        "ok": True,
+        "status": 200,
         "active_player": current_room["active_player"] == self_idx,
         "self": {
             "hands": current_room["hands"][self_idx],
@@ -429,13 +619,6 @@ async def get_dice_updates(player_id: int, room_id: str):
             "count": current_room["count"][opponent_idx],
             "results": current_room["results"][opponent_idx]
         }
-    }
-    logger.info(f"Пользователь {player_id} успешно получил обновления в комнате {room_id}")
-    return {
-        "msg": "Обновления успешно получены.",
-        "ok": True,
-        "status": 200,
-        "data": data
     }
     
 
@@ -589,7 +772,11 @@ async def get_blackjack_updates(player_id: int, room_id: str):
         }
     self_idx: int = current_room["players"].index(player_id)
     opponent_idx: int = int(not self_idx)
-    data = {
+    logger.info(f"Пользователь {player_id} успешно получил обновления в комнате {room_id}")
+    return {
+        "msg": "Обновления успешно получены.",
+        "ok": True,
+        "status": 200,
         "active_player": current_room["active_player"] == self_idx,
         "self": {
             "hands": current_room["hands"][self_idx],
@@ -601,13 +788,6 @@ async def get_blackjack_updates(player_id: int, room_id: str):
             "count": current_room["count"][opponent_idx],
             "results": current_room["results"][opponent_idx]
         }
-    }
-    logger.info(f"Пользователь {player_id} успешно получил обновления в комнате {room_id}")
-    return {
-        "msg": "Обновления успешно получены.",
-        "ok": True,
-        "status": 200,
-        "data": data
     }
 
 @app.get('/api/blackjack/rooms', response_class=JSONResponse)
@@ -665,12 +845,13 @@ async def get_currencies():
             tds = tr.find_all("td")
             price = tds[3].get_text()
             value, rate = tds[2].get_text(" ", strip=True).rsplit(" ", maxsplit=1)
-            coins.append({"value": value, "rate": rate, "price": price})
+            coins.append({"name": value, "symbol": rate, "price": price})
     return {"msg": "Курсы успешно получены", "ok": True, "status": 200, "coins": coins}
 
 @app.post('/api/lottery', response_class=JSONResponse)
 async def get_lottery():
-    return {"msg": "Лотерея успешно получена", "ok": True, "status": 200, "lottery": "Here is value of current lottery", "time": "End time"}
+    end_time, amount = await ltry.get_current_lottery()
+    return {"msg": "Лотерея успешно получена", "ok": True, "status": 200, "lottery": amount, "time": end_time}
 
 @app.get("/referal", response_class=HTMLResponse)
 async def referal(request: Request):
@@ -707,15 +888,33 @@ async def lottery(request: Request):
     return templates.TemplateResponse("index.html", context=request)
 
 
-async def run_fastapi():
-    uvicorn.run(app=app, host="localhost", port=8002)
 
+def task_mark_guess_games():
+    asyncio.run_coroutine_threadsafe(db.mark_guess_games(), bot.loop)
 
+async def start_uvicorn():
+    config = uvicorn.Config(app, host="localhost", port=8001)
+    server = uvicorn.Server(config)
+    await server.serve()
+
+async def start_bot():
+    await dp.start_polling(bot)
+
+async def main():
+    await asyncio.gather(
+        start_bot(),
+        start_uvicorn()
+    )
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="localhost", port=8001, reload=True)
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(
-        dp.start_polling(bot, on_startup=run_fastapi))
+    schedule.every().hour.do(task_mark_guess_games)
+    asyncio.run(main())
+    # asyncio.new_event_loop().run_until_complete(asyncio.gather(dp.start_polling(bot), uvicorn.run(app=app)))
+    # uvicorn.run(app="main:app", host="localhost", port=8001, reload=True)
+    # asyncio.get_event_loop_policy().new_event_loop().run_until_complete(
+    #     dp.start_polling(bot, on_startup=run_fastapi))
+
+
     #asyncio.get_running_loop()
 
 #loop = asyncio.get_event_loop()

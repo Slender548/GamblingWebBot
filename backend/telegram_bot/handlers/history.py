@@ -12,7 +12,8 @@ batch_size: int = 10
 
 @router.callback_query(F.data.startswith("History_"))
 async def history(callback: CallbackQuery, state: FSMContext, bot: Bot):
-    _, page = callback.data.split("_")
+    _, page_str = callback.data.split("_")
+    page = int(page_str)
     count_transactions = await db.get_count_transactions()
     if page < 0:
         await bot.answer_callback_query(callback.id, "Назад некуда")
@@ -61,7 +62,7 @@ async def search_history(message: Message, state: FSMContext):
 @router.callback_query(F.data.startswith("Histor_"))
 async def search_histor(callback: CallbackQuery):
     _, id = callback.data.split("_")
-    transaction = await db.get_transaction(id)
+    transaction = await db.get_transaction(int(id))
     await callback.message.edit_text(text=f"ID Транзакции: {transaction.transaction_id}\n"
                                      f"Хэш транзакции: {transaction.transaction_hash}\n"
                                      f"ID Телеграмма пользователя, совершившего транакцию: {transaction.telegram_id}\n"
@@ -73,7 +74,7 @@ async def search_histor(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("ConfirmTransaction_"))
 async def confirm_transaction(callback: CallbackQuery):
     _, id = callback.data.split("_")
-    if (await db.confirm_transaction(id)):
+    if (await db.confirm_transaction(int(id))):
         await callback.message.edit_text(text="Транзакция успешно подтверждена. Деньги зачислены на баланс.", reply_markup=get_home_keyboard())
     else:
         await callback.message.edit_text(text="Произошла ошибка.", reply_markup=get_home_keyboard())

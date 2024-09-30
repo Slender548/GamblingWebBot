@@ -9,8 +9,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from loguru import logger
 
-engine = create_async_engine(environ["database_url"],
-                             isolation_level="AUTOCOMMIT")
+engine = create_async_engine(environ["database_url"], isolation_level="AUTOCOMMIT")
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -24,26 +23,26 @@ class Users(Model):
     user_id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[str] = mapped_column(unique=True)
     username: Mapped[str] = mapped_column(String(30))
-    wallet_address: Mapped[str] = mapped_column(String(128),
-                                                nullable=False,
-                                                unique=True)
+    wallet_address: Mapped[str] = mapped_column(
+        String(128),
+    )
     admin: Mapped[bool] = mapped_column(nullable=True, default=None)
-    dollar_balance: Mapped[float] = mapped_column(default=0)
     money_balance: Mapped[float] = mapped_column(default=0)
+    last_visit_to_bot: Mapped[datetime] = mapped_column(
+        nullable=True, default=datetime.utcnow() - timedelta(hours=5)
+    )
+    bonuses_to_bot: Mapped[int] = mapped_column(nullable=True, default=3)
     total_transactions: Mapped[float] = mapped_column(default=0)
-    joined_at: Mapped[datetime] = mapped_column(
-        default=db.func.current_timestamp())
+    joined_at: Mapped[datetime] = mapped_column(default=db.func.current_timestamp())
 
 
 class Wallets(Model):
     __tablename__ = "wallets"
 
     wallet_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     blockchain: Mapped[str] = mapped_column(String(16), nullable=False)
-    address: Mapped[str] = mapped_column(String(128),
-                                         unique=True,
-                                         nullable=False)
+    address: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     balance: Mapped[float] = mapped_column(default=0)
 
 
@@ -51,12 +50,13 @@ class Bets(Model):
     __tablename__ = "bets"
 
     bet_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     amount: Mapped[float] = mapped_column(nullable=False)
-    status: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime]
+    status: Mapped[bool] = mapped_column(default=None, nullable=True)
+    way: Mapped[int]
+    coin: Mapped[str]
+    start_value: Mapped[float]
     supposed_at: Mapped[datetime]
-    resolved_at: Mapped[datetime] = mapped_column(default=None, nullable=True)
 
 
 class FinishedGame(Model):
@@ -64,23 +64,27 @@ class FinishedGame(Model):
 
     game_id: Mapped[int] = mapped_column(primary_key=True)
     game_type: Mapped[int] = mapped_column(nullable=False)
-    first_user_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    first_user_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     second_user_id: Mapped[int | None] = mapped_column(
-        ForeignKey('users.telegram_id'), nullable=True)
+        ForeignKey("users.telegram_id"), nullable=True
+    )
     amount: Mapped[int] = mapped_column(nullable=False)
     game_hash: Mapped[int] = mapped_column(nullable=False)
     resolved_at: Mapped[datetime] = mapped_column(
-        nullable=False, default=db.func.current_timestamp())
+        nullable=False, default=db.func.current_timestamp()
+    )
 
 
 class Referrals(Model):
     __tablename__ = "referrals"
 
     referral_id: Mapped[int] = mapped_column(primary_key=True)
-    referrer_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'),
-                                             nullable=False)
-    referred_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'),
-                                             nullable=False)
+    referrer_id: Mapped[int] = mapped_column(
+        ForeignKey("users.telegram_id"), nullable=False
+    )
+    referred_id: Mapped[int] = mapped_column(
+        ForeignKey("users.telegram_id"), nullable=False
+    )
     bonus: Mapped[float] = mapped_column(default=0)
     status: Mapped[bool] = mapped_column(nullable=True, default=None)
 
@@ -89,12 +93,11 @@ class Transactions(Model):
     __tablename__ = "transactions"
 
     transaction_id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    telegram_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     amount: Mapped[float] = mapped_column(nullable=False)
-    transaction_hash: Mapped[str] = mapped_column(str(uuid4()))
+    transaction_hash: Mapped[str] = mapped_column(default=str(uuid4()))
     transaction_type: Mapped[int] = mapped_column(nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=db.func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(default=db.func.current_timestamp())
     confirmed_at: Mapped[datetime] = mapped_column(nullable=True, default=None)
 
 
@@ -102,10 +105,10 @@ class LotteryTransactions(Model):
     __tablename__ = "lottery_transactions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
+    telegram_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     amount: Mapped[float] = mapped_column(nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=db.func.current_timestamp())
+    multiplier: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=db.func.current_timestamp())
     confirmed_at: Mapped[datetime] = mapped_column(nullable=True)
 
 
@@ -119,15 +122,14 @@ try:
 except RuntimeError:  # 'RuntimeError: There is no current event loop...'
     loop = None
 if loop and loop.is_running():
-    print(
-        'Async event loop already running. Adding coroutine to the event loop.'
-    )
+    print("Async event loop already running. Adding coroutine to the event loop.")
     tsk = loop.create_task(create_tables())
     # ^-- https://docs.python.org/3/library/asyncio-task.html#task-object
     # Optionally, a callback function can be executed when the coroutine completes
     tsk.add_done_callback(
-        lambda t: print(f'Task done with result={t.result()}  << None'))
+        lambda t: print(f"Task done with result={t.result()}  << None")
+    )
 else:
-    print('Starting new event loop')
+    print("Starting new event loop")
     result = asyncio.run(create_tables())
-logger.info('Модели из БД готовы к использованию')
+logger.info("Модели из БД готовы к использованию")

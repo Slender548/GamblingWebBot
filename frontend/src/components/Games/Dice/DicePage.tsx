@@ -1,6 +1,9 @@
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import NavBar from "../../NavBar";
+import NumberInput from "../../NumberInput";
 
 interface DiceRoom {
   name: string;
@@ -8,12 +11,14 @@ interface DiceRoom {
   room_id: string;
 }
 
-export default function DicePage(): JSX.Element {
+
+const DicePage = (): JSX.Element => {
   const [rooms, setRooms] = useState<Array<DiceRoom>>([]);
   const [createPopup, setCreatePopup] = useState<boolean>(false);
-  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
-  const nameRef = useRef<HTMLInputElement>(null);
-  const rewardRef = useRef<HTMLInputElement>(null);
+  const { initDataRaw, initData } = getLaunchParams();
+  const [name, setName] = useState<string>("");
+  const [reward, setReward] = useState<number>(0);
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchRooms = async () => {
       const response = await fetch("/api/dice/rooms", {
@@ -25,11 +30,11 @@ export default function DicePage(): JSX.Element {
       }
     };
     fetchRooms();
+    return () => {
+    }
   }, [initDataRaw, initData?.user?.id]);
 
   const createDice = (): void => {
-    const name = nameRef.current?.value;
-    const reward = rewardRef.current?.value;
     if (!name || !reward) {
       toast.error("Необходимо заполнить все поля");
       return;
@@ -43,8 +48,8 @@ export default function DicePage(): JSX.Element {
         body: JSON.stringify({
           initData: initDataRaw,
           player_id: initData?.user?.id,
-          name: nameRef.current?.value,
-          reward: rewardRef.current?.value,
+          name,
+          reward,
         }),
       });
       if (!response.ok) {
@@ -62,13 +67,13 @@ export default function DicePage(): JSX.Element {
         reward: number;
       } = await response.json();
 
-      window.location.href = `/dice_game?room_id=${data.room_id}&reward=${data.reward}`;
+      navigate(`/dice_game?room_id=${data.room_id}&reward=${data.reward}`);
     };
     fetchCreate();
   };
 
   const botStartDice = (): void => {
-    window.location.href = "/dice_bot";
+    navigate("/dice_bot");
   };
 
   const setShowCreatePopup = (): void => {
@@ -92,15 +97,23 @@ export default function DicePage(): JSX.Element {
     createDice();
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setName(e.target.value);
+  }
+
+  const handleRewardChange = (num: string): void => {
+    setReward(Number(num));
+  }
+
   const showCreatePopup = (): JSX.Element => {
     return (
       <div id="createPopup" className="popup">
         <div className="popup-content">
           <h2>Создать игру</h2>
           <label>Название</label>
-          <input type="text" ref={nameRef} name="game-name" />
+          <input type="text" style={{ textAlign: "center" }} onChange={handleNameChange} maxLength={20} />
           <label>Награда</label>
-          <input type="number" ref={rewardRef} name="game-reward" />
+          <NumberInput onChange={handleRewardChange} />
           <div className="popup-buttons">
             <button type="submit" className="btn-create" onClick={createGame}>
               Создать
@@ -126,7 +139,7 @@ export default function DicePage(): JSX.Element {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ initData: initDataRaw, room_id: room_id }),
+      body: JSON.stringify({ initData: initDataRaw, room_id: room_id, player_id: initData?.user?.id }),
     });
     if (!response.ok) {
       const data = await response.json();
@@ -144,7 +157,7 @@ export default function DicePage(): JSX.Element {
     } = await response.json();
 
     //redirect to blackjack?room_id=room_id&reward=reward
-    window.location.href = `/dice_game?room_id=${data.room_id}&reward=${data.reward}`;
+    navigate(`/dice_game?room_id=${data.room_id}&reward=${data.reward}`);
   };
 
   return (
@@ -169,12 +182,22 @@ export default function DicePage(): JSX.Element {
               onClick={() => joinDice(room.room_id)}
             >
               <div className="dice-join-title">{room.name}</div>
-              <div className="dice-join-reward">{room.reward}$</div>
+              <div className="dice-join-reward">{room.reward} {
+                room.reward % 10 === 1 && room.reward % 100 !== 11
+                  ? "монета"
+                  : 2 <= room.reward % 10 &&
+                    room.reward % 10 <= 4 &&
+                    !(12 <= room.reward % 100 && room.reward % 100 <= 14)
+                    ? "монеты"
+                    : "монет"}</div>
             </button>
           ))}
         </div>
       </div>
       {createPopup && showCreatePopup()}
+      <NavBar stricted={false} />
     </>
   );
 }
+
+export default DicePage;

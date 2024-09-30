@@ -2,8 +2,19 @@ import React, { useState, useEffect } from "react";
 import "./CrashGame.css";
 import { toast } from "react-toastify";
 import NavBar from "../../NavBar";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import NumberInput from "../../NumberInput";
 
+function formatLargeNumber(num: number) {
+  const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
+  let i = 0;
+  while (num >= 1000 && i < suffixes.length - 1) {
+    num /= 1000;
+    i++;
+  }
+
+  return num.toFixed(2) + suffixes[i];
+}
 
 const CrashGame: React.FC = () => {
   const [multiplier, setMultiplier] = useState<number>(1);
@@ -11,7 +22,7 @@ const CrashGame: React.FC = () => {
   const [hasBetPlaced, setHasBetPlaced] = useState<boolean>(false);
   const [reward, setReward] = useState<number>(100);
   const [graphPoints, setGraphPoints] = useState<Array<{ x: number; y: number }>>([]);
-  const { initData, initDataRaw } = retrieveLaunchParams();
+  const { initDataRaw, initData } = getLaunchParams();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [crashMultiplier, setCrashMultiplier] = useState<number | null>(null);
 
@@ -44,36 +55,65 @@ const CrashGame: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGameActive, graphPoints]);
 
   const crashGame = () => {
     setIsGameActive(false);
     setHasBetPlaced(false);
-    toast.warn(`Вы проиграли ${reward}$`);
+    setMultiplier(1.0);
+    toast.warn(`Вы проиграли ${reward} ${reward % 10 === 1 && reward % 100 !== 11
+      ? "монета"
+      : 2 <= reward % 10 &&
+        reward % 10 <= 4 &&
+        !(12 <= reward % 100 && reward % 100 <= 14)
+        ? "монеты"
+        : "монет"}`);
     fetch('/api/game/finish', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        player_id: initData?.user?.id,
+        game_type: 4,
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
         initData: initDataRaw,
-        reward: -reward
+        amount: -reward
       }),
     })
   };
 
-  const placeBet = () => {
+  const placeBet = async () => {
     if (hasBetPlaced) {
       toast.info("Ставка уже сделана!");
       return;
+    }
+    try {
+      const response = await fetch("/api/money/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: initData?.user?.id,
+          initData: initDataRaw,
+          bet: reward,
+        }),
+      });
+      const data = await response.json();
+      if (!data.ok) {
+        toast.error("Недостаточно монет");
+        return;
+      }
+    } catch (error) {
+      console.error(error);
     }
     setHasBetPlaced(true);
     setIsGameActive(true);
     setMultiplier(1);
     setGraphPoints([]);
     setCrashMultiplier(null); // Сбросить случайный множитель
-    toast.info("Ставка сделана! Игра началась.");
   };
 
   const cashOut = () => {
@@ -90,25 +130,32 @@ const CrashGame: React.FC = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        player_id: initData?.user?.id,
+        game_type: 4,
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
         initData: initDataRaw,
-        reward: (reward * multiplier) - reward
+        amount: (reward * multiplier) - reward
       }),
     });
 
     setMultiplier(1)
   };
 
-  const handleRewardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    setReward(value);
+  const handleRewardChange = (num: string) => {
+    setReward(Number(num));
   };
 
   return (
     <>
       <div className="page-title">
         <div className="page-title-cell">
-          <b className="page-title-cell-title">💰Награда💰:</b> {reward ? (reward * multiplier).toFixed(1) : 0}$
+          <b className="page-title-cell-title">💰Награда💰:</b> {reward ? formatLargeNumber((reward * multiplier)) : 0} {(reward * multiplier) % 10 === 1 && (reward * multiplier) % 100 !== 11
+            ? "монета"
+            : 2 <= (reward * multiplier) % 10 &&
+              (reward * multiplier) % 10 <= 4 &&
+              !(12 <= (reward * multiplier) % 100 && (reward * multiplier) % 100 <= 14)
+              ? "монеты"
+              : "монет"}
         </div>
         <div className="page-title-cell">
           <b className="page-title-cell-title">Множитель:</b>{" "}
@@ -121,7 +168,7 @@ const CrashGame: React.FC = () => {
       <div className="page-other">
         <button
           type="button"
-          className="cell"
+          className="cell btn-def"
           onClick={cashOut}
           disabled={!isGameActive}
         >
@@ -129,23 +176,14 @@ const CrashGame: React.FC = () => {
         </button>
         <button
           type="button"
-          className="cell"
-          onClick={placeBet}
+          className="cell def"
+          onClick={() => placeBet()}
           disabled={isGameActive}
         >
           Поставить
         </button>
         <div className="cell">
-          <input
-            style={{ textAlign: "center", fontSize: "1.3rem" }}
-            id="reward-input"
-            type="number"
-            value={reward}
-            onChange={handleRewardChange}
-            min="0"
-            step="0.01"
-            disabled={isGameActive}
-          />
+          <NumberInput style={{ fontSize: "1.3rem" }} value="reward" onChange={handleRewardChange} disabled={isGameActive} placeholder="Сумма" />
         </div>
         <div className="graph-container">
           <svg width="100%" height="100%" viewBox="0 0 100 50">

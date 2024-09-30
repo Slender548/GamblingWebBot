@@ -1,8 +1,22 @@
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import { useEffect, useState } from "react";
 import NavBar from "../NavBar";
 import { fetchReward, fetchLink, fetchReferral } from "./Utils";
 import { toast } from "react-toastify";
+import getLaunchParams from "../RetrieveLaunchParams";
+
+function formatLargeNumber(num: number) {
+  const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
+  let i = 0;
+  while (num >= 1000 && i < suffixes.length - 1) {
+    num /= 1000;
+    i++;
+  }
+
+  return num.toFixed(2) + suffixes[i];
+}
+
+
+
 
 /**
  * A React component that displays the number of referrals and rewards earned by a user.
@@ -10,40 +24,44 @@ import { toast } from "react-toastify";
  *
  * @return {JSX.Element} The JSX element representing the component.
  */
-export default function Referral(): JSX.Element {
+const Referral = (): JSX.Element => {
   const [reward, setReward] = useState<number>(0);
   const [referral, setReferral] = useState<number>(0);
   const [link, setLink] = useState<string>("");
-  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
+  const { initDataRaw, initData } = getLaunchParams();
   useEffect(() => {
-    fetchReward(initDataRaw, initData?.user?.id).then(
-      (reward) => {
+    const fetchAll = async () => {
+      try {
+        const [reward, referral, link] = await Promise.all([
+          fetchReward(initDataRaw, initData?.user?.id),
+          fetchReferral(initDataRaw, initData?.user?.id),
+          fetchLink(initDataRaw, initData?.user?.id),
+        ]);
+
         if (reward === -1) {
           toast.error("Не удалось получить данные. Перезагрузите страницу");
         } else {
           setReward(reward);
         }
-      }
-    )
-    fetchReferral(initDataRaw, initData?.user?.id).then(
-      (referral) => {
+
         if (referral === -1) {
           toast.error("Не удалось получить данные. Перезагрузите страницу");
         } else {
           setReferral(referral);
         }
-      }
-    )
-    fetchLink(initDataRaw, initData?.user?.id).then(
-      (link) => {
+
         if (link === "") {
           toast.error("Не удалось получить данные. Перезагрузите страницу");
         } else {
           setLink(link);
         }
+      } catch (error) {
+        console.error(error);
       }
-    )
-  }, [initDataRaw, initData?.user?.id]);
+    }
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const referalEnding: string =
     referral % 10 === 1 && referral % 100 !== 11
       ? "пользователь"
@@ -104,23 +122,24 @@ export default function Referral(): JSX.Element {
     fetchTakeReward();
   };
 
+
   return (
     <>
       <div className="page-title">
-        <div className="page-title-cell">
+        <div className="page-title-cell inter">
           <b className="page-title-cell-title"> Приглашено:</b> {referral}{" "}
           {referalEnding}
         </div>
-        <div className="page-title-cell">
-          <b className="page-title-cell-title"> Награда:</b> {reward}{" "}
+        <div className="page-title-cell inter">
+          <b className="page-title-cell-title"> Награда:</b> {formatLargeNumber(reward)}{" "}
           {rewardEnding}
         </div>
       </div>
       <div className="page-other">
-        <button className="cell btn-active" onClick={takeLink}>
+        <button className="cell btn-def inter" onClick={takeLink}>
           Скопировать ссылку
         </button>
-        <button className="cell btn-money" onClick={takeReward}>
+        <button className="cell btn-money inter" onClick={takeReward}>
           💰Забрать награду💰
         </button>
       </div>
@@ -128,3 +147,5 @@ export default function Referral(): JSX.Element {
     </>
   );
 }
+
+export default Referral;

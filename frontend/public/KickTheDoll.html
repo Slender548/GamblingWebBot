@@ -76,7 +76,9 @@ body {
 	z-index: 1;
 }
 		</style>
-		<link rel="manifest" href="KickTheDoll.manifest.json">
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="KickTheDoll.icon.png" />
+<link rel="apple-touch-icon" href="KickTheDoll.apple-touch-icon.png"/>
+<link rel="manifest" href="KickTheDoll.manifest.json">
 
 	</head>
 	<body>
@@ -93,26 +95,12 @@ body {
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
-		<script>
-			function getParamValue(paramName)
-			{
-				var url = window.location.search.substring(1); //get rid of "?" in querystring
-				var qArray = url.split('&'); //get key-value pairs
-				for (var i = 0; i < qArray.length; i++) 
-				{
-					var pArr = qArray[i].split('='); //split key and value
-					if (pArr[0] == paramName) 
-						return pArr[1]; //return value
-				}
-			}
-			</script>
+		<script>function update() {
+			parent.postMessage("1");
+		}</script>
 		<script src="KickTheDoll.js"></script>
 		<script>
-var lavai = getParamValue("lavai");
-var trast = getParamValue("trast");
-var val = getParamValue("val");
-console.log(lavai, trast, val);
-const GODOT_CONFIG = {"args":[`lavai--${lavai}`,`trast--${trast}`,`val--${val}`],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"KickTheDoll","experimentalVK":false,"fileSizes":{"KickTheDoll.pck":18339840,"KickTheDoll.wasm":1620216},"focusCanvas":true,"gdextensionLibs":["godot_rapier.wasm"],"serviceWorker":"KickTheDoll.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"KickTheDoll","experimentalVK":false,"fileSizes":{"KickTheDoll.pck":18256592,"KickTheDoll.wasm":1620216},"focusCanvas":true,"gdextensionLibs":["godot_rapier.wasm"],"serviceWorker":"KickTheDoll.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -166,6 +154,7 @@ const engine = new Engine(GODOT_CONFIG);
 	const missing = Engine.getMissingFeatures({
 		threads: GODOT_THREADS_ENABLED,
 	});
+	
 
 	if (missing.length !== 0) {
 		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {

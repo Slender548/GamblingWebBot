@@ -1,32 +1,32 @@
-import { useTonAddress, useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
+import {
+    useTonAddress,
+    useTonConnectUI
+} from "@tonconnect/ui-react";
 import { toast } from "react-toastify";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import getLaunchParams from "../RetrieveLaunchParams";
 
 
 
 const RegisterPage: React.FC = (): JSX.Element => {
     const [registered, setRegistered] = useState<boolean>(false);
-    const tonAddress = useTonAddress(true);
+    const tonAddress = useTonAddress(false);
     const [tonConnectUI] = useTonConnectUI();
-    const { initData, initDataRaw } = retrieveLaunchParams();
-    const wallet = useTonWallet();
+    const { initDataRaw, initData } = getLaunchParams();
     const navigate = useNavigate();
 
-
     tonConnectUI.onStatusChange((wallet) => {
-        if (wallet?.connectItems?.tonProof && 'proof' in wallet.connectItems.tonProof) {
-            toast("YES")
-            console.log(wallet.connectItems.tonProof.name)
-            console.log(wallet.provider)
-            console.log(wallet.account.chain)
+        if (
+            wallet
+        ) {
             setRegistered(true);
         }
     });
+
     useEffect(() => {
         const fetchRegister = () => {
-            fetch('/api/player/post', {
+            fetch("/api/player/post", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -35,38 +35,53 @@ const RegisterPage: React.FC = (): JSX.Element => {
                     wallet_address: tonAddress,
                     telegram_id: initData?.user?.id,
                     username: initData?.user?.username,
-                    initData: initDataRaw
-                })
-            }).then((response) => response.json()).then(data => {
-                if (data.ok) {
-                    toast.success("Вы успешно зарегистрированы")
-                    navigate("/referal")
-                } else {
-                    toast.error(data.msg)
-                }
+                    initData: initDataRaw,
+                }),
             })
-        }
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.ok) {
+                        toast.success("Вы успешно зарегистрированы");
+                        navigate("/referal");
+                    } else {
+                        toast.error(data.msg);
+                        setRegistered(false);
+                        tonConnectUI.disconnect();
+                    }
+                });
+        };
         if (registered) fetchRegister();
-    }, [registered, initData, initDataRaw, tonAddress, navigate])
+    }, [registered]);
 
-    return <><div className="page-title">
-        <div className="page-title-cell">
-            <b className="page-title-cell-title">Регистрация</b>
-        </div>
-        <div className="page-title-cell" style={{ textAlign: "center" }}>
-            <b className="page-title-cell-title" >Условие: </b>на вашем кошельке должно быть более 30 транзакций
-        </div>
-    </div>
-        <div className="page-other">
-            <button
-                className="cell btn-money"
-                onClick={() => tonConnectUI.openModal()}
-            >
-                Привязать TON Кошёлёк
-            </button>
 
-        </div>
-    </>
-}
+    if (tonAddress) {
+        if (!registered)
+            tonConnectUI.disconnect();
+    }
+
+    return (
+        <>
+            <div className="page-title">
+                <div className="page-title-cell inter">
+                    <b className="page-title-cell-title">Регистрация</b>
+                </div>
+                <div className="page-title-cell inter" style={{ textAlign: "center" }}>
+                    <b className="page-title-cell-title">Условие: </b>на вашем кошельке
+                    должно быть более 5$
+                    <br />
+                    <b className="page-title-cell-title">или более 30 транзакций</b>
+                </div>
+            </div>
+            <div className="page-other">
+                <button
+                    className="cell btn-money inter"
+                    onClick={() => tonConnectUI.openModal()}
+                >
+                    Привязать TON Кошёлёк
+                </button>
+            </div>
+        </>
+    );
+};
 
 export default RegisterPage;

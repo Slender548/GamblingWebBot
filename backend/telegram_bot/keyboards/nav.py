@@ -15,8 +15,13 @@ def get_keyboard(element: str, page: int, count: int,
             text="⬅️", callback_data=f"{element}_{0 if page < 1 else page-1}"),
         InlineKeyboardButton(text="🏠", callback_data="Main"),
         InlineKeyboardButton(
-            text="🏠", callback_data=f"{element}_{min(page+1, count//10)}"))
-    keyboard.adjust(5, 5, 3)
+            text="➡️", callback_data=f"{element}_{min(page+1, count//10)}"))
+    datalen = len(data)
+    if datalen > 5:
+        adjustination = datalen//2, datalen//2
+        keyboard.adjust(*adjustination)
+    else:
+        keyboard.adjust(datalen, 3)
     return keyboard.as_markup()
 
 

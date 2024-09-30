@@ -15,3 +15,4 @@ class States(StatesGroup):
     LotteryHistory = State()
     ChangeMoneyBalance = State()
     ChangeDollarBalance = State()
+    MoveTechWorks = State()

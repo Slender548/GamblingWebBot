@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 interface NavBarProps {
     stricted: boolean;
+    fromGame?: boolean;
 }
 
-const NavBar = ({ stricted }: NavBarProps) => {
+const NavBar = ({ stricted, fromGame = false }: NavBarProps) => {
     const [navigateAwayUrl, setNavigateAwayUrl] = useState<string>("");
     const [showClass, setShowClass] = useState<boolean>(false);
     const navigate = useNavigate();
@@ -14,22 +15,36 @@ const NavBar = ({ stricted }: NavBarProps) => {
         navigate(path);
     };
 
+
+
     if (stricted) {
+
         const showLeavePopup = () => {
             setTimeout(() => {
                 setShowClass(true);
             }, 50);
         };
 
-        const sureLeave = () => {
-            navigate(navigateAwayUrl);
-            closeLeavePopup();
-        };
+        let sureLeave;
+
+        if (fromGame) {
+            sureLeave = () => {
+                window.location.replace(navigateAwayUrl);
+                closeLeavePopup();
+            };
+        } else {
+            sureLeave = () => {
+                navigate(navigateAwayUrl);
+                closeLeavePopup();
+            };
+        }
+
 
         const closeLeavePopup = () => {
             setShowClass(false);
             setTimeout(() => setNavigateAwayUrl(""), 500);
         };
+
 
         const strictedNavigate = (path: string) => {
             setNavigateAwayUrl(path);
@@ -42,53 +57,53 @@ const NavBar = ({ stricted }: NavBarProps) => {
                         type="button"
                         id="Ref"
                         onClick={() => strictedNavigate("/referal")}
-                        className="btn btn-nav"
+                        className="btn btn-nav inter"
                     >
-                        Referal
+                        Реферал
                     </button>
                     <button
                         type="button"
                         id="Bal"
                         onClick={() => strictedNavigate("/balance")}
-                        className="btn btn-nav"
+                        className="btn btn-nav inter"
                     >
-                        Balance
+                        Баланс
                     </button>
                     <button
                         type="button"
                         id="Game"
                         onClick={() => strictedNavigate("/game")}
-                        className="btn btn-nav"
+                        className="btn btn-nav inter"
                     >
-                        Game
+                        Игра
                     </button>
                     <button
                         type="button"
                         id="Games"
                         onClick={() => strictedNavigate("/games")}
-                        className="btn btn-nav"
+                        className="btn btn-nav inter"
                     >
-                        Games
+                        Мини-игры
                     </button>
                     <button
                         type="button"
                         id="Lottery"
                         onClick={() => strictedNavigate("/lottery")}
-                        className="btn btn-nav"
+                        className="btn btn-nav inter"
                     >
-                        Lottery
+                        Лотерея
                     </button>
                 </div>
                 {navigateAwayUrl && (
                     <div id="leave-popup" className={`popup ${showClass ? "show" : ""}`}>
-                        <div className="popup-content">
+                        <div className="popup-content inter">
                             <h2>Подтвердите выход</h2>
                             <p>Вы уверены, что хотите уйти?</p>
                             <div className="popup-buttons">
-                                <button className="btn-cancel" onClick={sureLeave}>
+                                <button className="btn-cancel inter" onClick={sureLeave}>
                                     Да
                                 </button>
-                                <button className="btn-create" onClick={closeLeavePopup}>
+                                <button className="btn-create inter" onClick={closeLeavePopup}>
                                     Нет
                                 </button>
                             </div>
@@ -99,46 +114,46 @@ const NavBar = ({ stricted }: NavBarProps) => {
         );
     } else {
         return (
-            <div className="nav">
+            <div className="nav inter">
                 <button
                     type="button"
                     id="Ref"
                     onClick={() => defaultNavigate("/referal")}
-                    className="btn btn-nav"
+                    className="btn btn-nav inter"
                 >
-                    Referal
+                    Реферал
                 </button>
                 <button
                     type="button"
                     id="Bal"
                     onClick={() => defaultNavigate("/balance")}
-                    className="btn btn-nav"
+                    className="btn btn-nav inter"
                 >
-                    Balance
+                    Баланс
                 </button>
                 <button
                     type="button"
                     id="Game"
                     onClick={() => defaultNavigate("/game")}
-                    className="btn btn-nav"
+                    className="btn btn-nav inter"
                 >
-                    Game
+                    Игра
                 </button>
                 <button
                     type="button"
                     id="Games"
                     onClick={() => defaultNavigate("/games")}
-                    className="btn btn-nav"
+                    className="btn btn-nav inter"
                 >
-                    Games
+                    Мини-игры
                 </button>
                 <button
                     type="button"
                     id="Lottery"
                     onClick={() => defaultNavigate("/lottery")}
-                    className="btn btn-nav"
+                    className="btn btn-nav inter"
                 >
-                    Lottery
+                    Лотерея
                 </button>
             </div>
         );

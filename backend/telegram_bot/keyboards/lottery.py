@@ -30,7 +30,7 @@ def manage_keyboard() -> InlineKeyboardMarkup:
     keyboard.add(
         InlineKeyboardButton(text="Изменить дату окончания",
                              callback_data="ChangeLotteryDate"),
-        InlineKeyboardButton(text="Завершить розыгрыш преждевременно",
+        InlineKeyboardButton(text="Завершить розыгрыш",
                              callback_data="CloseLottery"),
         InlineKeyboardButton(text="🏠", callback_data="Main"),
     )
@@ -43,6 +43,25 @@ def sure_keyboard() -> InlineKeyboardMarkup:
     keyboard.add(
         InlineKeyboardButton(text="Да", callback_data="SureCloseLottery"),
         InlineKeyboardButton(text="Нет", callback_data="Lottery"),
+        InlineKeyboardButton(text="🏠", callback_data="Main"),
+    )
+    keyboard.adjust(1)
+    return keyboard.as_markup()
+def create_lottery_keyboard(date: str) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text="Начать новый розыгрыш",
+                             callback_data=f"CreateLottery_{date}"),
+        InlineKeyboardButton(text="🏠", callback_data="Main"),
+    )
+    keyboard.adjust(1)
+    return keyboard.as_markup()
+
+def change_lottery_keyboard(date: str) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text="Изменить дату окончания",
+                             callback_data=f"ChangeLotteryDate_{date}"),
         InlineKeyboardButton(text="🏠", callback_data="Main"),
     )
     keyboard.adjust(1)

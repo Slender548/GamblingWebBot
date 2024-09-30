@@ -6,5 +6,5 @@ except KeyError:
     raise Exception("Please set your bot username in .env file")
 
 
-def get_invitation_link(telegram_id):
+async def get_invitation_link(telegram_id):
     return f"https://t.me/{bot_username}?start={telegram_id}"

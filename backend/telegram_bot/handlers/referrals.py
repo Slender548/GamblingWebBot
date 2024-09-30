@@ -12,7 +12,8 @@ router = Router(name=__name__)
 
 @router.callback_query(F.data.startswith("Referrals_"))
 async def referrals(callback: CallbackQuery, state: FSMContext, bot: Bot):
-    _, page = callback.data.split("_")
+    _, page_str = callback.data.split("_")
+    page = int(page_str)
     count_referrals = await db.get_count_referrals()
     if page < 0:
         await bot.answer_callback_query(callback.id, "Назад некуда")

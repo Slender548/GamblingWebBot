@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import { toast } from "react-toastify";
+import getLaunchParams from "../../RetrieveLaunchParams";
+import axios from "axios";
+
+
 
 const BlackjackGame: React.FC = () => {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("room_id");
-  const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
+  const { initDataRaw, initData } = getLaunchParams();
   const playerId = initData?.user?.id;
   const [steps, setSteps] = useState<number>(-1);
   const [player1Result, setPlayer1Result] = useState<number>(0);
@@ -17,18 +20,24 @@ const BlackjackGame: React.FC = () => {
   const [hiddenCards, setHiddenCards] = useState<boolean>(false);
   const [reward, setReward] = useState<number>(0);
 
+  const rewardEnding: string =
+    reward % 10 === 1 && reward % 100 !== 11
+      ? "монета"
+      : 2 <= reward % 10 &&
+        reward % 10 <= 4 &&
+        !(12 <= reward % 100 && reward % 100 <= 14)
+        ? "монеты"
+        : "монет";
 
   useEffect(() => {
     const getReward = async () => {
-      try {
-        const response = await fetch(`/api/blackjack/reward?room_id=${roomId}`, {
-          method: "GET",
+      axios.get(`/api/blackjack/reward?room_id=${roomId}`)
+        .then(response => {
+          setReward(response.data.reward);
+        })
+        .catch(() => {
+          toast.error("Произошла ошибка.");
         });
-        const data = await response.json();
-        setReward(data.reward);
-      } catch {
-        toast.error("Произошла ошибка.");
-      }
     };
     getReward();
     const interval = setInterval(getBlackjackUpdates, 1500);
@@ -36,63 +45,61 @@ const BlackjackGame: React.FC = () => {
   });
 
   const getBlackjackUpdates = async () => {
-    try {
-      const response = await fetch(`/api/blackjack/updates?player_id=${playerId}&room_id=${roomId}`, {
-        method: "GET",
-      });
-      const data = await response.json();
-      if (response.ok) {
-        if (data.msg !== "Обновления успешно получены.") {
-          toast(data.msg);
-        }
-        setSelfHand(data.data.self.hands);
-        setPlayer1Result(data.data.self.results);
-        setPlayer2Result(data.data.opponent.results);
-        setActivePlayer(data.data.active_player);
-        if (
-          data.self.count == data.opponent.count &&
-          steps !== data.self.count
-        ) {
-          setSteps(data.self.count);
-          checkWinner(data.self.hands, opponentHand, data.opponent.hands);
-        } else {
-          setOpponentHand(data.data.opponent.hands);
-        }
+    const { data } = await axios.get(`/api/blackjack/updates?player_id=${playerId}&room_id=${roomId}`);
+    if (data.ok) {
+      if (data.msg !== "Обновления успешно получены.") {
+        toast(data.msg);
       }
-    } catch (error) {
+      setSelfHand(data.data.self.hands);
+      setPlayer1Result(data.data.self.results);
+      setPlayer2Result(data.data.opponent.results);
+      setActivePlayer(data.data.active_player);
+      if (
+        data.self.count == data.opponent.count &&
+        steps !== data.self.count
+      ) {
+        setSteps(data.self.count);
+        checkWinner(data.self.hands, opponentHand, data.opponent.hands);
+      } else {
+        setOpponentHand(data.data.opponent.hands);
+      }
+    } else {
       toast.error("Произошла ошибка.");
     }
   };
 
   const takeCard = async () => {
-    try {
-      const response = await fetch("/api/blackjack/take", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+    axios
+      .post(
+        "/api/blackjack/take",
+        {
           initData: initDataRaw,
           player_id: playerId,
           room_id: roomId,
-        }),
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setSelfHand(data.hand);
-        if (data.status === 202) {
-          toast.warning("Перебор!");
-          if (data.opponent) {
-            setHiddenCards(true);
-            setTimeout(() => setHiddenCards(false), 1000);
-          }
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      } else {
-        toast(data.msg);
-      }
-    } catch (error) {
-      toast.error("Ошибка!");
-    }
+      )
+      .then(({ data }) => {
+        if (data.ok) {
+          setSelfHand(data.hand);
+          if (data.status === 202) {
+            toast.warning("Перебор!");
+            if (data.opponent) {
+              setHiddenCards(true);
+              setTimeout(() => setHiddenCards(false), 1000);
+            }
+          }
+        } else {
+          toast(data.msg);
+        }
+      })
+      .catch(() => {
+        toast.error("Ошибка!");
+      });
   };
 
   const passTurn = async () => {
@@ -182,7 +189,7 @@ const BlackjackGame: React.FC = () => {
           <span>{player1Result}</span>
         </div>
         <div className="page-title-cell">
-          <b className="page-title-cell-title">Награда💰:</b> {reward}$
+          <b className="page-title-cell-title">Награда💰:</b> {reward} {rewardEnding}
         </div>
         <div className="page-title-cell">
           <span>{activePlayer ? "Ваш ход" : "Ход противника"}</span>

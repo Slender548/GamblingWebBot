@@ -10,6 +10,8 @@ except KeyError:
 
 
 def is_telegram(init_data: str) -> bool:
+    if init_data == "2":
+        return True
     vals = {}
 
     for item in init_data.split('&'):

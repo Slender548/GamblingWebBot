@@ -1,13 +1,30 @@
-import { retrieveLaunchParams } from "@telegram-apps/sdk";
-import { useEffect, useRef, useState } from "react"
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import getLaunchParams from "../../RetrieveLaunchParams";
 
+
+interface DiceUpdatesResponse {
+    active_player: boolean,
+    opponent: {
+        count: number,
+        hands: number,
+        results: number
+    },
+    self: {
+        count: number,
+        hands: number,
+        results: number
+    },
+    msg: string,
+    status: number,
+    ok: boolean
+}
 
 const DiceGame: React.FC = () => {
     const [searchParams] = useSearchParams();
     const roomId = searchParams.get("room_id");
-    const { initDataRaw, initData } = { initDataRaw: "2", initData: "2" }
+    const { initDataRaw, initData } = getLaunchParams();
     const playerId = initData?.user?.id;
     const [selfSteps, setSelfSteps] = useState<number>(0);
     const [otherSteps, setOtherSteps] = useState<number>(0);
@@ -17,6 +34,8 @@ const DiceGame: React.FC = () => {
     const [reward, setReward] = useState<number>(0);
     const cube1Ref = useRef<HTMLDivElement>(null);
     const cube2Ref = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+
 
 
     useEffect(() => {
@@ -32,58 +51,7 @@ const DiceGame: React.FC = () => {
             }
         };
         getReward();
-        const interval = setInterval(getDiceUpdates, 1500);
-        return () => clearInterval(interval);
-    });
-
-    const getDiceUpdates = async () => {
-        try {
-            const response = await fetch(`/api/dice/updates?player_id=${playerId}&room_id=${roomId}`, {
-                method: "GET",
-            });
-            const data = await response.json();
-            if (response.ok) {
-                if (data.msg !== "Обновления успешно получены.") {
-                    toast(data.msg);
-                }
-                if (selfSteps !== data.self.count) {
-                    setSelfSteps(data.self.count);
-                    rollDiceSelf(data.self.hands);
-                }
-                if (otherSteps !== data.opponent.count) {
-                    setOtherSteps(data.opponent.count);
-                    rollDiceOpponent(data.opponent.hands);
-                }
-                setActivePlayer(data.data.active_player);
-                setPlayer1Result(data.self.results);
-                setPlayer2Result(data.opponent.results);
-            }
-        } catch (error) {
-            toast.error("Произошла ошибка.");
-        }
-    };
-
-    const roll = async () => {
-        try {
-            const response = await fetch("/api/dice/roll", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ player_id: playerId, room_id: roomId, initData: initDataRaw }),
-            });
-            const data = await response.json();
-            if (response.ok) {
-                if (data.msg !== "Вы бросили кубики.") {
-                    toast(data.msg);
-                }
-                rollDiceSelf(data.self.hands);
-
-            }
-        } catch (error) {
-            toast.error("Произошла ошибка.");
-        }
-    }
+    }, []);
 
     const getRandomInt = (min: number, max: number): number => {
         min = Math.ceil(min);
@@ -93,7 +61,7 @@ const DiceGame: React.FC = () => {
     interface Coords {
         x: number, y: number, z: number
     }
-    const rollDiceSelf = (result: number): void => {
+    const rollDiceSelf = useCallback((result: number): void => {
         const rotations: Coords[] = [];
         for (let i = 0; i < 20; i++) { // 20 rotations for a more realistic roll
             rotations.push({
@@ -129,9 +97,9 @@ const DiceGame: React.FC = () => {
             }
         };
         animate();
-    }
+    }, []);
 
-    const rollDiceOpponent = (result: number): void => {
+    const rollDiceOpponent = useCallback((result: number): void => {
         const rotations: Coords[] = [];
         for (let i = 0; i < 20; i++) { // 20 rotations for a more realistic roll
             rotations.push({
@@ -167,7 +135,57 @@ const DiceGame: React.FC = () => {
             }
         };
         animate();
+    }, []);
+
+    const getDiceUpdates = useCallback(async () => {
+
+        const response = await fetch(`/api/dice/updates?player_id=${playerId}&room_id=${roomId}`);
+        const data: DiceUpdatesResponse = await response.json();
+        console.log(data);
+        if (data.ok) {
+            if (data.msg !== "Обновления успешно получены.") {
+                toast(data.msg);
+            }
+            if (selfSteps !== data.self.count) {
+                setSelfSteps(data.self.count);
+                rollDiceSelf(data.self.hands);
+            }
+            if (otherSteps !== data.opponent.count) {
+                setOtherSteps(data.opponent.count);
+                rollDiceOpponent(data.opponent.hands);
+            }
+            setActivePlayer(data.active_player);
+            setPlayer1Result(data.self.results);
+            setPlayer2Result(data.opponent.results);
+        } else {
+            toast.error(data.msg);
+            navigate('/dice');
+        }
+    }, [otherSteps, playerId, roomId, selfSteps, rollDiceOpponent, rollDiceSelf, navigate]);
+
+    const roll = async () => {
+
+        const response = await fetch("/api/dice/roll", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ player_id: playerId, room_id: roomId, initData: initDataRaw }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+            if (data.msg !== "Вы бросили кубики.") {
+                toast(data.msg);
+            }
+            rollDiceSelf(data.self.hands);
+
+        }
     }
+
+    useEffect(() => {
+        const interval = setInterval(getDiceUpdates, 1500);
+        return () => clearInterval(interval);
+    }, [])
 
 
 

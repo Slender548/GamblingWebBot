@@ -45,7 +45,7 @@ const fetchReferral = async (initDataRaw: string | undefined, userId: number | u
     });
     const data = await response.json();
     if (data.ok) {
-        return data.referal_count;
+        return data.referral_count;
     } else {
         return -1;
     }

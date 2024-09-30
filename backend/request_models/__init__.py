@@ -8,11 +8,29 @@ class DefaultRequest(BaseModel):
 class PlayerRequest(DefaultRequest):
     player_id: int
 
+class MoneyRequest(PlayerRequest):
+    money: float | int
+
+class LotteryBetRequest(PlayerRequest):
+    reward: float | int
+    bet: float | int
 
 class TransactionRequest(DefaultRequest):
     amount: float
     transaction_type: int
 
+class CoinBetRequest(DefaultRequest):
+    coin_name: str
+    player_id: int
+    way: bool
+    time: str
+    bet: float
+
+class AmountRequest(PlayerRequest):
+    bet: float
+
+class WalletAmountRequest(DefaultRequest):
+    amount: int | float
 
 class FinishedGameRequest(DefaultRequest):
     game_type: int
@@ -25,6 +43,8 @@ class LeaveRequest(DefaultRequest):
     room_id: str
     player_id: int
 
+class WalletRequest(PlayerRequest):
+    wallet_address: str
 
 class RoomRequest(DefaultRequest):
     room_id: str
@@ -32,7 +52,7 @@ class RoomRequest(DefaultRequest):
 
 class CreateUserRequest(DefaultRequest):
     username: str
-    telegram_id: str
+    telegram_id: int
     wallet_address: str
 
 
