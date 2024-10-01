@@ -3,6 +3,7 @@ import NavBar from "../NavBar";
 import { fetchReward, fetchLink, fetchReferral } from "./Utils";
 import { toast } from "react-toastify";
 import getLaunchParams from "../RetrieveLaunchParams";
+import axios from "axios";
 
 function formatLargeNumber(num: number) {
   const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
@@ -100,17 +101,10 @@ const Referral = (): JSX.Element => {
    */
   const takeReward = async (): Promise<void> => {
     const fetchTakeReward = async () => {
-      const response = await fetch("/api/take-reward", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          initData: initDataRaw,
-          player_id: initData?.user?.id,
-        }),
-      });
-      const data = await response.json();
+      const { data } = await axios.post("/api/take-reward", {
+        initData: initDataRaw,
+        player_id: initData?.user?.id
+      })
       if (data.ok) {
         const intervalId = setInterval(() => {
           setReward((reward) =>

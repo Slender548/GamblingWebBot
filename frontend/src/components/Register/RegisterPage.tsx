@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import getLaunchParams from "../RetrieveLaunchParams";
+import axios from "axios";
 
 
 
@@ -26,20 +27,14 @@ const RegisterPage: React.FC = (): JSX.Element => {
 
     useEffect(() => {
         const fetchRegister = () => {
-            fetch("/api/player/post", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+            axios
+                .post("/api/player/post", {
                     wallet_address: tonAddress,
                     telegram_id: initData?.user?.id,
                     username: initData?.user?.username,
                     initData: initDataRaw,
-                }),
-            })
-                .then((response) => response.json())
-                .then((data) => {
+                })
+                .then(({ data }) => {
                     if (data.ok) {
                         toast.success("Вы успешно зарегистрированы");
                         navigate("/referal");

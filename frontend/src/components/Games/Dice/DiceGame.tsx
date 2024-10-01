@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
+import axios from "axios";
 
 
 interface DiceUpdatesResponse {
@@ -41,10 +42,7 @@ const DiceGame: React.FC = () => {
     useEffect(() => {
         const getReward = async () => {
             try {
-                const response = await fetch(`/api/dice/reward?room_id=${roomId}`, {
-                    method: "GET"
-                });
-                const data = await response.json();
+                const { data } = await axios.get(`/api/dice/reward?room_id=${roomId}`);
                 setReward(data.reward);
             } catch {
                 toast.error("Произошла ошибка.");
@@ -139,9 +137,12 @@ const DiceGame: React.FC = () => {
 
     const getDiceUpdates = useCallback(async () => {
 
-        const response = await fetch(`/api/dice/updates?player_id=${playerId}&room_id=${roomId}`);
-        const data: DiceUpdatesResponse = await response.json();
-        console.log(data);
+        const { data }: { data: DiceUpdatesResponse } = await axios.get(`/api/dice/updates`, {
+            params: {
+                player_id: playerId,
+                room_id: roomId
+            }
+        });
         if (data.ok) {
             if (data.msg !== "Обновления успешно получены.") {
                 toast(data.msg);
@@ -164,21 +165,16 @@ const DiceGame: React.FC = () => {
     }, [otherSteps, playerId, roomId, selfSteps, rollDiceOpponent, rollDiceSelf, navigate]);
 
     const roll = async () => {
-
-        const response = await fetch("/api/dice/roll", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ player_id: playerId, room_id: roomId, initData: initDataRaw }),
-        });
-        const data = await response.json();
-        if (response.ok) {
+        const { data } = await axios.post("/api/dice/roll", {
+            initData: initDataRaw,
+            player_id: playerId,
+            room_id: roomId
+        })
+        if (data.ok) {
             if (data.msg !== "Вы бросили кубики.") {
                 toast(data.msg);
             }
             rollDiceSelf(data.self.hands);
-
         }
     }
 

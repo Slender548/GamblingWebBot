@@ -12,6 +12,7 @@ import cyanChip from "../../../assets/images/chips/cyan-chip.png";
 import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
+import axios from "axios";
 
 const API = {
   getRandomBet: async (): Promise<string> => {
@@ -117,18 +118,11 @@ const RouletteGame: React.FC = () => {
   }, [isRouletteWheelSpinning]);
 
   const handleDoSpin = async () => {
-    const response = await fetch('/api/money/check', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        initData: initDataRaw,
-        player_id: initData?.user?.id,
-        bet: totalBet,
-      }),
+    const { data } = await axios.post("/api/money/check", {
+      player_id: initData?.user?.id,
+      initData: initDataRaw,
+      bet: totalBet,
     })
-    const data = await response.json();
     if (!data.ok) {
       toast.error("Недостаточно монет");
       return;
@@ -345,33 +339,21 @@ const RouletteGame: React.FC = () => {
           ? "монеты"
           : "монет"
         } `);
-      fetch('/api/game/finish', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_user_id: initData?.user?.id,
-          second_user_id: null,
-          initData: initDataRaw,
-          amount: -(totalBet - winAmount),
-          game_type: 6
-        }),
+      axios.post('/api/game/finish', {
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
+        initData: initDataRaw,
+        amount: -(totalBet - winAmount),
+        game_type: 6
       })
     } else if (totalBet === winAmount) {
       toast.success(`Вы ничего не потеряли`);
-      fetch('/api/game/finish', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_user_id: initData?.user?.id,
-          second_user_id: null,
-          initData: initDataRaw,
-          amount: 0,
-          game_type: 6
-        }),
+      axios.post('/api/game/finish', {
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
+        initData: initDataRaw,
+        amount: 0,
+        game_type: 6
       })
     } else if (totalBet < winAmount) {
       toast.success(`Вы выиграли ${formatLargeNumber(winAmount - totalBet)} ${(winAmount - totalBet) % 10 === 1 && (winAmount - totalBet) % 100 !== 11
@@ -381,18 +363,12 @@ const RouletteGame: React.FC = () => {
           !(12 <= (winAmount - totalBet) % 100 && (winAmount - totalBet) % 100 <= 14)
           ? "монеты"
           : "монет"}`);
-      fetch('/api/game/finish', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_user_id: initData?.user?.id,
-          second_user_id: null,
-          initData: initDataRaw,
-          amount: winAmount - totalBet,
-          game_type: 6
-        }),
+      axios.post('/api/game/finish', {
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
+        initData: initDataRaw,
+        amount: winAmount - totalBet,
+        game_type: 6
       });
     }
   };

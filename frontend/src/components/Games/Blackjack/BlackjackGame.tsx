@@ -104,18 +104,11 @@ const BlackjackGame: React.FC = () => {
 
   const passTurn = async () => {
     try {
-      const response = await fetch("/api/blackjack/pass", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          initData: initDataRaw,
-          player_id: playerId,
-          room_id: roomId,
-        }),
-      });
-      const data = await response.json();
+      const { data } = await axios.post("/api/blackjack/pass", {
+        initData: initDataRaw,
+        player_id: playerId,
+        room_id: roomId,
+      })
       if (!data.ok) {
         toast(data.msg);
       }

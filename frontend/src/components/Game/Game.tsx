@@ -90,7 +90,7 @@ const Game: React.FC = () => {
           <b className="page-title-cell-title">Бонус активен</b>
         </div> : null}
       </div>
-      <iframe src="/KickTheDoll.html" title="Game" width={"100%"} style={{ height: "81vh", marginTop: "9vh", marginBottom: "10vh" }} />
+      <iframe src="/assets/KickTheDoll.html" title="Game" width={"100%"} style={{ height: "81vh", marginTop: "9vh", marginBottom: "10vh" }} />
       <NavBar stricted={false} fromGame={true} />
     </div>
   );

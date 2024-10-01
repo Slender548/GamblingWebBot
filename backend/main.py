@@ -853,6 +853,11 @@ async def get_lottery():
     end_time, amount = await ltry.get_current_lottery()
     return {"msg": "Лотерея успешно получена", "ok": True, "status": 200, "lottery": amount, "time": end_time}
 
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html",
+                                      context={"request": request})
+
 @app.get("/referal", response_class=HTMLResponse)
 async def referal(request: Request):
     return templates.TemplateResponse("index.html",
@@ -892,6 +897,9 @@ async def lottery(request: Request):
 def task_mark_guess_games():
     asyncio.run_coroutine_threadsafe(db.mark_guess_games(), bot.loop)
 
+def clear_game_sessions():
+    asyncio.run_coroutine_threadsafe(db.clear_game_sessions(), bot.loop)
+
 async def start_uvicorn():
     config = uvicorn.Config(app, host="localhost", port=8001)
     server = uvicorn.Server(config)
@@ -906,7 +914,9 @@ async def main():
         start_uvicorn()
     )
 
+
 if __name__ == "__main__":
+    schedule.every().day.do(clear_game_sessions)
     schedule.every().hour.do(task_mark_guess_games)
     asyncio.run(main())
     # asyncio.new_event_loop().run_until_complete(asyncio.gather(dp.start_polling(bot), uvicorn.run(app=app)))

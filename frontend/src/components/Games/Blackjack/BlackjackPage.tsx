@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
 import NavBar from "../../NavBar";
 import NumberInput from "../../NumberInput";
+import axios from "axios";
 
 interface BlackjackRoom {
   name: string;
@@ -23,11 +24,8 @@ const BlackjackPage: React.FC = (): JSX.Element => {
 
   useEffect(() => {
     const fetchRooms = async () => {
-      const response = await fetch("/api/blackjack/rooms", {
-        method: "GET",
-      });
-      const data = await response.json();
-      if (response.ok) {
+      const { data } = await axios.get('/api/blackjack/rooms');
+      if (data.ok) {
         setRooms(data.rooms);
       }
     };
@@ -41,56 +39,35 @@ const BlackjackPage: React.FC = (): JSX.Element => {
       toast.error("Необходимо заполнить все поля");
       return;
     }
-    const response = await fetch("/api/blackjack/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        initData: initDataRaw,
-        player_id: initData?.user?.id,
-        name: name,
-        reward: reward,
-      }),
-    });
 
-    if (!response.ok) {
-      const data = await response.json();
+    const { data } = await axios.post("/api/blackjack/create", {
+      initData: initDataRaw,
+      player_id: initData?.user?.id,
+      name: name,
+      reward: reward,
+    })
+
+    if (!data.ok) {
       toast.error(data.msg);
       return;
     }
-
-    const data = await response.json();
 
     //redirect to blackjack?room_id=room_id&reward=reward
     navigate(`/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`);
   };
 
   const joinBlackjack = async (room_id: string) => {
-    const response = await fetch(`/api/blackjack/join?room_id=${room_id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        initData: initDataRaw,
-        player_id: initData?.user?.id,
-        room_id: room_id,
-      }),
-    });
-    if (!response.ok) {
-      const data = await response.json();
-      toast.error(data.msg);
-    }
 
-    const data: {
-      msg: string;
-      ok: boolean;
-      status: number;
-      room_id: string;
-      name: string;
-      reward: number;
-    } = await response.json();
+    const { data } = await axios.post(`/api/blackjack/join`, {
+      initData: initDataRaw,
+      player_id: initData?.user?.id,
+      room_id
+    })
+
+    if (!data.ok) {
+      toast.error(data.msg);
+      return;
+    }
 
     navigate(`/blackjack_game?room_id=${data.room_id}&reward=${data.reward}`);
   };

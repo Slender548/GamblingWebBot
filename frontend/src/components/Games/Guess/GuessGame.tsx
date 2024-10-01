@@ -5,6 +5,7 @@ import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
 import NumberInput from "../../NumberInput";
+import axios from "axios";
 
 interface Coin {
     name: string;
@@ -37,8 +38,7 @@ const GuessPage: React.FC = () => {
     useEffect(() => {
         const updateCoins = async () => {
             try {
-                const response = await fetch('/api/guess/currencies');
-                const data = await response.json();
+                const { data } = await axios.get('/api/guess/currencies');
                 if (data.ok) {
                     setCoins(data.coins);
                 } else {
@@ -62,39 +62,24 @@ const GuessPage: React.FC = () => {
             toast.error("Необходимо заполнить все поля")
             return
         }
-
-        const res = await fetch('/api/money/check', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                initData: initDataRaw,
-                player_id: initData?.user?.id,
-                bet,
-            }),
+        let { data } = await axios.post('/api/money/check', {
+            initData: initDataRaw,
+            player_id: initData?.user?.id,
+            bet,
         })
-        const dt = await res.json();
-        if (!dt.ok) {
+        if (!data.ok) {
             toast.error("Недостаточно монет");
             return;
         }
 
-        const response = await fetch('/api/guess/bet', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                initData: initDataRaw,
-                coin_name: coins[curCoin].name,
-                player_id: initData?.user?.id,
-                bet,
-                time,
-                way,
-            }),
-        })
-        const data = await response.json();
+        data = (await axios.post('/api/money/bet', {
+            initData: initDataRaw,
+            player_id: initData?.user?.id,
+            bet,
+            coin_name: coins[curCoin].name,
+            time,
+            way
+        })).data
         if (data.ok) {
             toast.success("Ставка сделана")
         } else {

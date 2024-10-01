@@ -1,4 +1,4 @@
-
+import axios from "axios";
 interface LotteryData {
     currentValue: number,
     endTime: string
@@ -21,16 +21,9 @@ interface WinnersData {
  * @return {Promise<LotteryData>} A promise that resolves when the data is fetched and updated.
  */
 const fetchLottery = async (initDataRaw: string | undefined): Promise<LotteryData> => {
-    const response = await fetch("/api/lottery", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            initData: initDataRaw,
-        }),
-    });
-    const data = await response.json();
+    const { data } = await axios.post("/api/lottery", {
+        initData: initDataRaw,
+    })
     if (data.ok) {
         return { currentValue: data.lottery, endTime: data.time }
     } else {
@@ -39,16 +32,9 @@ const fetchLottery = async (initDataRaw: string | undefined): Promise<LotteryDat
 };
 
 const fetchTopWinners = async (initDataRaw: string | undefined): Promise<WinnersData> => {
-    const response = await fetch("/api/lottery/topwinners", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            initData: initDataRaw,
-        }),
-    });
-    const data = await response.json();
+    const { data } = await axios.post("/api/lottery/topwinners", {
+        initData: initDataRaw,
+    })
     if (data.ok) {
         return { winners: data.winners }
     } else {

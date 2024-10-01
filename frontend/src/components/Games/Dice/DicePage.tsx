@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
 import NavBar from "../../NavBar";
 import NumberInput from "../../NumberInput";
+import axios from "axios";
 
 interface DiceRoom {
   name: string;
@@ -21,11 +22,8 @@ const DicePage = (): JSX.Element => {
   const navigate = useNavigate();
   useEffect(() => {
     const fetchRooms = async () => {
-      const response = await fetch("/api/dice/rooms", {
-        method: "GET",
-      });
-      const data = await response.json();
-      if (response.ok) {
+      const { data } = await axios.get('/api/dice/rooms');
+      if (data.ok) {
         setRooms(data.rooms);
       }
     };
@@ -40,32 +38,17 @@ const DicePage = (): JSX.Element => {
       return;
     }
     const fetchCreate = async () => {
-      const response = await fetch("/api/dice/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          initData: initDataRaw,
-          player_id: initData?.user?.id,
-          name,
-          reward,
-        }),
-      });
-      if (!response.ok) {
-        const data = await response.json();
+      const { data } = await axios.post('/api/dice/create', {
+        initData: initDataRaw,
+        player_id: initData?.user?.id,
+        name,
+        reward,
+      })
+
+      if (!data.ok) {
         toast.error(data.msg);
         return;
       }
-
-      const data: {
-        msg: string;
-        ok: boolean;
-        status: number;
-        room_id: string;
-        name: string;
-        reward: number;
-      } = await response.json();
 
       navigate(`/dice_game?room_id=${data.room_id}&reward=${data.reward}`);
     };
@@ -134,27 +117,16 @@ const DicePage = (): JSX.Element => {
 
 
   const joinDice = async (room_id: string) => {
-    const response = await fetch("/api/dice/join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ initData: initDataRaw, room_id: room_id, player_id: initData?.user?.id }),
-    });
-    if (!response.ok) {
-      const data = await response.json();
-      toast.error(data.msg);
-      //return;
-    }
+    const { data } = await axios.post("/api/dice/join", {
+      initData: initDataRaw,
+      player_id: initData?.user?.id,
+      room_id
+    })
 
-    const data: {
-      msg: string;
-      ok: boolean;
-      status: number;
-      room_id: string;
-      name: string;
-      reward: number;
-    } = await response.json();
+    if (!data.ok) {
+      toast.error(data.msg);
+      return;
+    }
 
     //redirect to blackjack?room_id=room_id&reward=reward
     navigate(`/dice_game?room_id=${data.room_id}&reward=${data.reward}`);

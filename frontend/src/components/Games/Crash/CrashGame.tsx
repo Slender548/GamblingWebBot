@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import NavBar from "../../NavBar";
 import getLaunchParams from "../../RetrieveLaunchParams";
 import NumberInput from "../../NumberInput";
+import axios from "axios";
 
 function formatLargeNumber(num: number) {
   const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc"];
@@ -69,18 +70,12 @@ const CrashGame: React.FC = () => {
         !(12 <= reward % 100 && reward % 100 <= 14)
         ? "монеты"
         : "монет"}`);
-    fetch('/api/game/finish', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        game_type: 4,
-        first_user_id: initData?.user?.id,
-        second_user_id: null,
-        initData: initDataRaw,
-        amount: -reward
-      }),
+    axios.post("/api/game/finish", {
+      game_type: 4,
+      first_user_id: initData?.user?.id,
+      second_user_id: null,
+      initData: initDataRaw,
+      amount: -reward
     })
   };
 
@@ -90,18 +85,11 @@ const CrashGame: React.FC = () => {
       return;
     }
     try {
-      const response = await fetch("/api/money/check", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          player_id: initData?.user?.id,
-          initData: initDataRaw,
-          bet: reward,
-        }),
-      });
-      const data = await response.json();
+      const { data } = await axios.post("/api/money/check", {
+        player_id: initData?.user?.id,
+        initData: initDataRaw,
+        bet: reward,
+      })
       if (!data.ok) {
         toast.error("Недостаточно монет");
         return;
@@ -124,19 +112,13 @@ const CrashGame: React.FC = () => {
     setIsGameActive(false);
     setHasBetPlaced(false);
     toast.success(`Вы вывели с множителем ${multiplier.toPrecision(3)}x!`);
-    fetch('/api/game/finish', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        game_type: 4,
-        first_user_id: initData?.user?.id,
-        second_user_id: null,
-        initData: initDataRaw,
-        amount: (reward * multiplier) - reward
-      }),
-    });
+    axios.post("/api/game/finish", {
+      game_type: 4,
+      first_user_id: initData?.user?.id,
+      second_user_id: null,
+      initData: initDataRaw,
+      amount: (reward * multiplier) - reward
+    })
 
     setMultiplier(1)
   };

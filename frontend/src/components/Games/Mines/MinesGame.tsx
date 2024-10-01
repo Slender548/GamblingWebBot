@@ -4,6 +4,7 @@ import NavBar from "../../NavBar";
 import { toast } from "react-toastify";
 import getLaunchParams from "../../RetrieveLaunchParams";
 import NumberInput from "../../NumberInput";
+import axios from "axios";
 
 interface Cell {
   hasMine: boolean;
@@ -70,18 +71,11 @@ const Mines: React.FC = () => {
       toast.error("Введите ставку");
       return;
     }
-    const response = await fetch('/api/money/check', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        player_id: initData?.user?.id,
-        initData: initDataRaw,
-        bet,
-      }),
+    const { data } = await axios.post('/api/money/check', {
+      initData: initDataRaw,
+      player_id: initData?.user?.id,
+      bet,
     })
-    const data = await response.json();
     if (!data.ok) {
       toast.error("Недостаточно монет");
       return;
@@ -105,18 +99,12 @@ const Mines: React.FC = () => {
 
     if (cell.hasMine) {
       toast.warn("Вы проиграли");
-      fetch('/api/game/finish', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          game_type: 3,
-          first_user_id: initData?.user?.id,
-          second_user_id: null,
-          initData: initDataRaw,
-          amount: -bet,
-        }),
+      axios.post("/api/game/finish", {
+        game_type: 3,
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
+        initData: initDataRaw,
+        amount: -bet,
       })
       setGameOver(true);
       revealAllMines(newBoard);
@@ -150,18 +138,12 @@ const Mines: React.FC = () => {
     if (unrevealedCells.length === 0) {
       setGameOver(true);
       toast.success("Вы выиграли!");
-      fetch('/api/game/finish', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          game_type: 3,
-          first_user_id: initData?.user?.id,
-          second_user_id: null,
-          initData: initDataRaw,
-          amount: bet
-        }),
+      axios.post("/api/game/finish", {
+        game_type: 3,
+        first_user_id: initData?.user?.id,
+        second_user_id: null,
+        initData: initDataRaw,
+        amount: bet
       })
     }
   };

@@ -5,6 +5,7 @@ import NavBar from "../NavBar";
 import { toast } from "react-toastify";
 import getLaunchParams from "../RetrieveLaunchParams";
 import NumberInput from "../NumberInput";
+import axios from "axios";
 
 const Lottery: React.FC = () => {
   const [segments, setSegments] = useState<string[]>([]);
@@ -161,18 +162,11 @@ const Lottery: React.FC = () => {
 
   const deposit = async () => {
     if (bet <= 0) return;
-    const response = await fetch("/api/money/check", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        player_id: initData?.user?.id,
-        initData: initDataRaw,
-        bet: bet,
-      }),
-    });
-    const data = await response.json();
+    const { data } = await axios.post("/api/money/check", {
+      initData: initDataRaw,
+      player_id: initData?.user?.id,
+      bet: bet,
+    })
     if (!data.ok) {
       toast.error("Недостаточно монет");
       return;
@@ -192,18 +186,12 @@ const Lottery: React.FC = () => {
       setInputDeg(newDeg);
       const index = Math.floor(((newDeg % 360) + 15) / 36);
       const prize = Number(inputSegments[index].replace("x", ""));
-      fetch("/api/lottery/deposit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          player_id: initData?.user?.id,
-          initData: initDataRaw,
-          reward: prize,
-          bet: bet,
-        }),
-      });
+      axios.post("/api/lottery/deposit", {
+        player_id: initData?.user?.id,
+        initData: initDataRaw,
+        reward: prize,
+        bet: bet,
+      })
       if (prize > 1) {
         toast.success(`Вы выиграли ${prize * bet - bet}!`);
       } else if (prize < 1) {
