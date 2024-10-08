@@ -30,7 +30,7 @@ from starlette.staticfiles import StaticFiles
 from random import randint, choice
 from typing import List
 
-from tech import is_tech_works
+from main.tech import is_tech_works
 from request_models import *
 from utils import *
 from database import db

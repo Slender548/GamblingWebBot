@@ -1,8 +1,4 @@
-.env
-/ReactApp
-__pycache__
-tasks.db
-/KickTheDoll
-test.*
-date.json
-_test.*
+node_modules
+venv
+test.py
+package-lock.json
